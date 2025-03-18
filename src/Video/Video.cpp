@@ -4,14 +4,14 @@
 
 namespace GBcc
 {
-    const GLfloat Video::m_OUTPUT_QUAD_VERTICES[] = {
+    const std::array<GLfloat, 20U> Video::m_OUTPUT_QUAD_VERTICES = {
         -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
         -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
          1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
          1.0f, -1.0f, 0.0f,  1.0f, 0.0f
     };
     
-    const GLuint Video::m_OUTPUT_QUAD_INDICES[] = {
+    const std::array<GLuint, 6U> Video::m_OUTPUT_QUAD_INDICES = {
         0, 1, 2,
         2, 3, 0
     };
@@ -114,7 +114,7 @@ namespace GBcc
         glBufferData(
             GL_ARRAY_BUFFER, 
             sizeof(m_OUTPUT_QUAD_VERTICES), 
-            m_OUTPUT_QUAD_VERTICES, 
+            m_OUTPUT_QUAD_VERTICES.data(), 
             GL_STATIC_DRAW
         );
         
@@ -122,7 +122,7 @@ namespace GBcc
         glBufferData(
             GL_ELEMENT_ARRAY_BUFFER, 
             sizeof(m_OUTPUT_QUAD_INDICES), 
-            m_OUTPUT_QUAD_INDICES, 
+            m_OUTPUT_QUAD_INDICES.data(), 
             GL_STATIC_DRAW
         );
 

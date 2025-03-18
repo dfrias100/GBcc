@@ -31,8 +31,8 @@ namespace GBcc {
         private:
         using Framebuffer = std::array<u8, VideoConstants::FRAMEBUFFER_SIZE>;
 
-        const static GLfloat m_OUTPUT_QUAD_VERTICES[]; 
-        const static GLuint  m_OUTPUT_QUAD_INDICES[];
+        const static std::array<GLfloat, 20U> m_OUTPUT_QUAD_VERTICES; 
+        const static std::array<GLuint,   6U> m_OUTPUT_QUAD_INDICES;
 
         const static char* m_OUTPUT_QUAD_VERT_SHADER;
         const static char* m_OUTPUT_QUAD_FRAG_SHADER;
