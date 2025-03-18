@@ -16,16 +16,26 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include <cstdint>
+#include "Video/Video.hpp"
+#include "Types.hpp"
+
+#include <chrono>
 
 namespace GBcc {
-    typedef uint8_t   u8;
-    typedef uint16_t u16;
-    typedef uint32_t u32;
-    typedef uint64_t u64;
+    class Emulator
+    {
+        private:
+        Video& m_Video;
 
-    typedef int8_t   i8;
-    typedef int16_t i16;
-    typedef int32_t i32;
-    typedef int64_t i64;
+        std::chrono::steady_clock m_Timer;
+        std::chrono::time_point<std::chrono::steady_clock> m_StartFrame;
+
+        void CapFramerate(const float fps);
+
+        public:
+        Emulator();
+        ~Emulator();
+        
+        void Run();
+    };
 }

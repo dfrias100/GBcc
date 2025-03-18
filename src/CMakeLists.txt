@@ -1,4 +1,5 @@
-add_subdirectory("Video")
+add_subdirectory("./Video")
+add_subdirectory("./Emulator")
 
 add_executable(GBcc main.cpp "../external/glad/src/glad.c")
 target_include_directories(
@@ -8,4 +9,4 @@ target_include_directories(
     "../include"
 )
 
-target_link_libraries(GBcc glfw Video)
+target_link_libraries(GBcc glfw Video Emulator)
