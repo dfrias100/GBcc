@@ -19,13 +19,14 @@
 #include "Video/VideoConstants.hpp"
 
 #include <cstdlib>
+#include <sstream>
 
 namespace GBcc {
     Emulator::Emulator() : m_Video(Video::getInstance()) {}
     
     Emulator::~Emulator() { }
 
-    void Emulator::CapFramerate(const float fps)
+    void Emulator::LimitFramerate(const float& fps)
     {
         float expectedFrametime = 1e9f / fps;
         auto chronoExpectedFrametime = std::chrono::nanoseconds(static_cast<u64>(expectedFrametime));
@@ -114,8 +115,8 @@ namespace GBcc {
 
             hScroll = (hScroll + 1) % VideoConstants::GAMEBOY_SCREEN_WIDTH;
             vScroll = (vScroll + 1) % VideoConstants::GAMEBOY_SCREEN_HEIGHT;
-
-            CapFramerate(VideoConstants::GAMEBOY_REFRESH_RATE);
+            
+            LimitFramerate(VideoConstants::GAMEBOY_REFRESH_RATE);
         }
     }
 }

@@ -16,26 +16,21 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "Video/Video.hpp"
+
 #include "Types.hpp"
+#include "Core/Sharp/SharpRegister.hpp"
 
-#include <chrono>
-
-namespace GBcc {
-    class Emulator
+namespace GBcc
+{
+    class Sharp
     {
         private:
-        Video& m_Video;
-
-        std::chrono::steady_clock m_Timer;
-        std::chrono::time_point<std::chrono::steady_clock> m_StartFrame;
-
-        void LimitFramerate(const float& fps);
-
-        public:
-        Emulator();
-        ~Emulator();
+        SharpFlagsRegister AF;
+        SharpRegister BC;
+        SharpRegister DE;
+        SharpRegister HL;
         
-        void Run();
+        u16 SP;
+        u16 PC;
     };
-}
+};

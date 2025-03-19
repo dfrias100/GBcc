@@ -15,27 +15,10 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
-#pragma once
-#include "Video/Video.hpp"
 #include "Types.hpp"
 
-#include <chrono>
-
-namespace GBcc {
-    class Emulator
-    {
-        private:
-        Video& m_Video;
-
-        std::chrono::steady_clock m_Timer;
-        std::chrono::time_point<std::chrono::steady_clock> m_StartFrame;
-
-        void LimitFramerate(const float& fps);
-
-        public:
-        Emulator();
-        ~Emulator();
-        
-        void Run();
-    };
+namespace GBcc
+{
+    constexpr u16 GB_HIGH_BYTE = 0xFF00U;
+    constexpr u16  GB_LOW_BYTE = 0x00FFU;
 }

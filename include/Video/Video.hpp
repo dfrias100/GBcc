@@ -21,6 +21,7 @@
 
 #include <utility>
 #include <array>
+#include <string>
 
 #include "Types.hpp"
 #include "VideoConstants.hpp"

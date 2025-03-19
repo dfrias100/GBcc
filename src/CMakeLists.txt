@@ -1,5 +1,6 @@
 add_subdirectory("./Video")
 add_subdirectory("./Emulator")
+add_subdirectory("./Core")
 
 add_executable(GBcc main.cpp)
 
