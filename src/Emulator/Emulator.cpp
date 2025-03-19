@@ -36,7 +36,7 @@ namespace GBcc {
     void Emulator::Run()
     {    
         std::array<u8, 160U * 144U * 3U> framebuffer;
-        std::array<std::array<u8, 3U>, 4U> color_lut ={
+        std::array<std::array<u8, 3U>, 4U> colorLut ={
             {
                 {0x08, 0x18, 0x20},
                 {0x34, 0x68, 0x56},
@@ -45,53 +45,75 @@ namespace GBcc {
             }
         };
 
-        u64 color1 = 0;
-        u64 color2 = 2;
+        u64 hScroll = 0;
+        u64 vScroll = 0;
 
-        for (size_t y = 0; y < 18; y++)
+        auto DrawChecker = [&framebuffer, colorLut](const u64& hScroll, const u64& vScroll)
         {
-            for (size_t x = 0; x < 20; x++)
+            u64 color1 = 0;
+            u64 color2 = 2;
+
+            for (size_t y = 0; y < 18; y++)
             {
-                constexpr u64 box_pixel_stride = 3U * 8U;
-                constexpr u64 box_row_stride = 20U * 8U * box_pixel_stride;
-                size_t start = y * box_row_stride + x * box_pixel_stride;
-
-                u64 color;
-                if (x % 2 == 0)
-                    color = color1;
-                else
-                    color = color2;
-
-                for (size_t box_y = 0; box_y < 8; box_y++)
+                for (size_t x = 0; x < 20; x++)
                 {
-                    for (size_t box_x = 0; box_x < 8; box_x++)
+                    constexpr u64 boxPixelStride = 3U * 8U;
+                    constexpr u64 boxRowStride = 20U * 8U * boxPixelStride;
+                    size_t start = y * boxRowStride + x * boxPixelStride;
+
+                    u64 color;
+                    if (x % 2 == 0)
+                        color = color1;
+                    else
+                        color = color2;
+
+                    for (size_t boxY = 0; boxY < 8; boxY++)
                     {
-                        constexpr u64 pixel_stride = 3U;
-                        constexpr u64 row_stride = VideoConstants::GAMEBOY_SCREEN_WIDTH * pixel_stride;
-                        size_t real_index = start + box_y * row_stride + box_x * pixel_stride;
+                        for (size_t boxX = 0; boxX < 8; boxX++)
+                        {
+                            constexpr u64 pixelStride = 3U;
+                            constexpr u64 rowStride = VideoConstants::GAMEBOY_SCREEN_WIDTH * pixelStride;
+                            size_t realIndex = start + boxY * rowStride + boxX * pixelStride + hScroll * 3;
 
-                        std::copy(color_lut[color].begin(), color_lut[color].end(), framebuffer.begin() + real_index);
+                            size_t rowBegin = y * boxRowStride + boxY * rowStride;
+                            size_t rowEnd = rowBegin + rowStride - 1; 
+
+                            if (realIndex > rowEnd)
+                                realIndex -= rowStride;
+
+                            realIndex += vScroll * rowStride;
+
+                            constexpr u64 framebufferEnd = (
+                                (
+                                    VideoConstants::GAMEBOY_SCREEN_HEIGHT * 
+                                    VideoConstants::GAMEBOY_SCREEN_WIDTH * 
+                                    3U
+                                ) - 
+                                1
+                            );
+
+                            if (realIndex > framebufferEnd)
+                                realIndex -= (framebufferEnd + 1);
+
+                            std::copy(colorLut[color].begin(), colorLut[color].end(), framebuffer.begin() + realIndex);
+                        }
                     }
+                    color ^= 1;
                 }
-                color ^= 1;
+                std::swap(color1, color2);
             }
-            std::swap(color1, color2);
-        }
-
-        framebuffer[0] = 0xFF;
-        framebuffer[1] = 0xFF;
-        framebuffer[2] = 0xFF;
-
-        framebuffer[framebuffer.size() - 3] = 0xFF;
-        framebuffer[framebuffer.size() - 2] = 0xFF;
-        framebuffer[framebuffer.size() - 1] = 0xFF;
+        };
 
         while (!m_Video.ShouldClose())
         {
             m_StartFrame = m_Timer.now();
 
+            DrawChecker(hScroll, vScroll);
             m_Video.UpdateTexture(framebuffer);
             m_Video.Draw();
+
+            hScroll = (hScroll + 1) % VideoConstants::GAMEBOY_SCREEN_WIDTH;
+            vScroll = (vScroll + 1) % VideoConstants::GAMEBOY_SCREEN_HEIGHT;
 
             CapFramerate(VideoConstants::GAMEBOY_REFRESH_RATE);
         }

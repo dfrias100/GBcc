@@ -17,6 +17,7 @@
 */
 #pragma once
 #include <cstdint>
+#include <cstddef>
 
 namespace GBcc {
     typedef uint8_t   u8;
