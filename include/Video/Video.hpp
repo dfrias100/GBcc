@@ -38,7 +38,6 @@ namespace GBcc {
         const static char* m_OUTPUT_QUAD_FRAG_SHADER;
 
         GLFWwindow* m_Window;
-        GLFWmonitor* m_Monitor;
 
         std::pair<GLfloat, GLfloat> m_WindowScale;
 

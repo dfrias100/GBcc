@@ -24,15 +24,15 @@
 namespace GBcc
 {
     const std::array<GLfloat, 20U> Video::m_OUTPUT_QUAD_VERTICES = {
-        -1.0f, -1.0f, 0.0f,  0.0f, 0.0f,
-        -1.0f,  1.0f, 0.0f,  0.0f, 1.0f,
-         1.0f,  1.0f, 0.0f,  1.0f, 1.0f,
-         1.0f, -1.0f, 0.0f,  1.0f, 0.0f
+         1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
+         1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
+        -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
+        -1.0f,  1.0f, 0.0f, 0.0f, 0.0f
     };
     
     const std::array<GLuint, 6U> Video::m_OUTPUT_QUAD_INDICES = {
-        0, 1, 2,
-        2, 3, 0
+        0, 1, 3,
+        1, 2, 3
     };
     
     const char* Video::m_OUTPUT_QUAD_VERT_SHADER = "#version 330\n"
@@ -41,7 +41,7 @@ namespace GBcc
         "out vec2 texCoord;\n"
         "void main()\n"
         "{\n"
-        "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+        "   gl_Position = vec4(aPos, 1.0);\n"
         "   texCoord = aTexCoord;\n"
         "}\0";
     
@@ -67,6 +67,7 @@ namespace GBcc
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, VideoConstants::GL_VERSION_MAJOR);
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, VideoConstants::GL_VERSION_MINOR);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+        glfwWindowHint(GLFW_SCALE_TO_MONITOR, GLFW_TRUE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     
         constexpr i32 windowWidth  = VideoConstants::GAMEBOY_SCREEN_WIDTH  * VideoConstants::GAMEBOY_SCREEN_SCALE;
@@ -75,18 +76,10 @@ namespace GBcc
         m_Window = glfwCreateWindow(
             windowWidth,
             windowHeight,
-            "GBcc - gl_test", 
-            NULL, 
+            "GBcc", 
+            NULL,
             NULL
         );
-
-        m_Monitor = glfwGetPrimaryMonitor();
-    
-        auto& [xScale, yScale] = m_WindowScale;
-        glfwGetMonitorContentScale(m_Monitor, &xScale, &yScale);
-
-        GLsizei trueWidth  = xScale * windowWidth;
-        GLsizei trueHeight = yScale * windowHeight;
 
         if (m_Window == NULL)
         {
@@ -103,7 +96,13 @@ namespace GBcc
             exit(-1);
         }
 
-        glViewport(0, 0, trueWidth, trueHeight);
+        auto& [xScale, yScale] = m_WindowScale;
+        glfwGetWindowContentScale(m_Window, &xScale, &yScale);
+
+        GLsizei trueWindowWidth  = xScale * windowWidth;
+        GLsizei trueWindowHeight = xScale * windowHeight;
+        
+        glViewport(0, 0, trueWindowWidth, trueWindowHeight);
 
         InitializeVertexObjects();
         InitializeTexture();

@@ -35,20 +35,61 @@ namespace GBcc {
 
     void Emulator::Run()
     {    
-        std::array<uint8_t, 160U * 144U * 3U> framebuffer;
-        auto gen_static = [&framebuffer]() {
-            for (size_t i = 0; i < framebuffer.size(); i += 3)
+        std::array<u8, 160U * 144U * 3U> framebuffer;
+        std::array<std::array<u8, 3U>, 4U> color_lut ={
             {
-                uint8_t col = (rand() % 4) * 85;
-                std::fill(framebuffer.begin() + i, framebuffer.begin() + i + 3, col);
+                {0x08, 0x18, 0x20},
+                {0x34, 0x68, 0x56},
+                {0x88, 0xC0, 0x70},
+                {0xE0, 0xF8, 0xD0}
             }
         };
+
+        u64 color1 = 0;
+        u64 color2 = 2;
+
+        for (size_t y = 0; y < 18; y++)
+        {
+            for (size_t x = 0; x < 20; x++)
+            {
+                constexpr u64 box_pixel_stride = 3U * 8U;
+                constexpr u64 box_row_stride = 20U * 8U * box_pixel_stride;
+                size_t start = y * box_row_stride + x * box_pixel_stride;
+
+                u64 color;
+                if (x % 2 == 0)
+                    color = color1;
+                else
+                    color = color2;
+
+                for (size_t box_y = 0; box_y < 8; box_y++)
+                {
+                    for (size_t box_x = 0; box_x < 8; box_x++)
+                    {
+                        constexpr u64 pixel_stride = 3U;
+                        constexpr u64 row_stride = VideoConstants::GAMEBOY_SCREEN_WIDTH * pixel_stride;
+                        size_t real_index = start + box_y * row_stride + box_x * pixel_stride;
+
+                        std::copy(color_lut[color].begin(), color_lut[color].end(), framebuffer.begin() + real_index);
+                    }
+                }
+                color ^= 1;
+            }
+            std::swap(color1, color2);
+        }
+
+        framebuffer[0] = 0xFF;
+        framebuffer[1] = 0xFF;
+        framebuffer[2] = 0xFF;
+
+        framebuffer[framebuffer.size() - 3] = 0xFF;
+        framebuffer[framebuffer.size() - 2] = 0xFF;
+        framebuffer[framebuffer.size() - 1] = 0xFF;
 
         while (!m_Video.ShouldClose())
         {
             m_StartFrame = m_Timer.now();
 
-            gen_static();
             m_Video.UpdateTexture(framebuffer);
             m_Video.Draw();
 
