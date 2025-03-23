@@ -20,44 +20,48 @@
 
 namespace GBcc
 {
-    enum class SharpFlags : u8
+    class ByteRegister
     {
-        ZERO    = 0b1000'0000,
-        NOT_ADD = 0b0100'0000,
-        HALF    = 0b0010'0000,
-        CARRY   = 0b0001'0000
+        private:
+        u8 m_Value;
+
+        public:
+        ByteRegister();
+        ByteRegister(const u8& initializerValue);
+        ByteRegister(const ByteRegister& reg);
+        
+        ByteRegister& operator=(const ByteRegister& reg);
+        ByteRegister& operator=(ByteRegister&& reg) = delete;
+
+        ~ByteRegister() = default;
+
+        void SetValue(const u8& value);
+        u8 GetValue();
+
+        void SetBit(size_t bitIndex);
+        void ResetBit(size_t bitIndex);
+
+        bool BitIsSet(size_t bitIndex);
     };
 
     class SharpRegister
     {
         protected:
-        u8 m_HighByte;
-        u8 m_LowByte;
+        ByteRegister& m_HighRegister;
+        ByteRegister& m_LowRegister;
 
         public:
-        SharpRegister();
-        SharpRegister(const u16& doubleWord);
-        SharpRegister(const u8& highByte, const u8& lowByte);
-        SharpRegister(const SharpRegister& reg);
+        SharpRegister() = delete;
+        SharpRegister(ByteRegister& highRegister, ByteRegister& lowRegister);
+        SharpRegister(const SharpRegister& reg) = delete;
 
-        SharpRegister& operator=(const SharpRegister& reg);
-        SharpRegister& operator=(SharpRegister&& reg);
+        SharpRegister& operator=(const SharpRegister& reg) = delete;
+        SharpRegister& operator=(SharpRegister&& reg) = delete;
 
         ~SharpRegister() = default;
 
         u16 GetDoubleWord();
-        u8  GetWord(const bool highByte);
 
-        virtual void SetDoubleWord(const u16& word);
-        virtual void SetWord(const bool highByte, const u8& word);
-    };
-
-    class SharpFlagsRegister : public SharpRegister
-    {
-        public:
-        void SetFlag(const SharpFlags flag, const bool raise);
-        bool FlagIsRaised(const SharpFlags flag);
-        void SetDoubleWord(const u16& doubleWord) override;
-        void SetWord(const bool highByte, const u8& dobuleWord) override;
+        void SetDoubleWord(const u16& doubleWord);
     };
 };

@@ -8,29 +8,20 @@ using GBcc::u8;
 
 int main(int argc, char** argv)
 {
-    GBcc::SharpRegister testRegister;
+    GBcc::ByteRegister testReg(0xFC);
+    Expect(u8(0xFC), testReg.GetValue());
 
-    Expect((u16)0, testRegister.GetDoubleWord());
-    Expect((u8)0, testRegister.GetWord(true));
-    Expect((u8)0, testRegister.GetWord(false));
+    GBcc::ByteRegister testReg2;
+    Expect(u8(0x00), testReg2.GetValue());
 
-    u16 val = 0xEBFC;
-    GBcc::SharpRegister testRegister2(val);
+    GBcc::SharpRegister testLargeReg(testReg, testReg2);
+    Expect(u16(0xFC00), testLargeReg.GetDoubleWord());
 
-    Expect(val, testRegister2.GetDoubleWord());
-    Expect((u8)0xEB, testRegister2.GetWord(true));
-    Expect((u8)0xFC, testRegister2.GetWord(false));
+    GBcc::ByteRegister testReg3(0xBC);
+    GBcc::ByteRegister testReg4(0xEA);
+    GBcc::SharpRegister testLargeReg2(testReg3, testReg4);
 
-    u8 valHigh = 0xAD;
-    u8 valLow = 0x8C;
-
-    u16 val2 = static_cast<u16>(valHigh) << 8U | valLow;
-
-    GBcc::SharpRegister testRegister3(valHigh, valLow);
-
-    Expect(val2, testRegister3.GetDoubleWord());
-    Expect(valHigh, testRegister3.GetWord(true));
-    Expect(valLow, testRegister3.GetWord(false));
+    Expect(u16(0xBCEA), testLargeReg2.GetDoubleWord());
 
     return 0;
 }

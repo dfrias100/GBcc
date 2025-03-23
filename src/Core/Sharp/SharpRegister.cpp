@@ -22,96 +22,69 @@
 
 namespace GBcc 
 {
-    SharpRegister::SharpRegister() : m_HighByte(0), m_LowByte(0) {};
-
-    SharpRegister::SharpRegister(const u16& doubleWord)
+    ByteRegister::ByteRegister() : m_Value(0) {}
+    ByteRegister::ByteRegister(const u8& initializerValue) : m_Value(initializerValue) {}
+    
+    ByteRegister::ByteRegister(const ByteRegister& reg)
     {
-        m_HighByte = (doubleWord & GB_HIGH_BYTE) >> 8U;
-        m_LowByte  =  doubleWord & GB_LOW_BYTE;
-    };
-
-    SharpRegister::SharpRegister(const u8& highByte, const u8& lowByte) 
-        : m_HighByte(highByte), m_LowByte(lowByte) {};
-
-    SharpRegister::SharpRegister(const SharpRegister& reg)
-        : m_HighByte(reg.m_HighByte), m_LowByte(reg.m_LowByte) {};
-        
-    SharpRegister& SharpRegister::operator=(const SharpRegister& reg)
-    {
-        this->m_HighByte = reg.m_HighByte;
-        this->m_LowByte = reg.m_LowByte;
-        
-        return *this;
+        this->m_Value = reg.m_Value;
     }
 
-    SharpRegister& SharpRegister::operator=(SharpRegister&& reg)
+    ByteRegister& ByteRegister::operator=(const ByteRegister& reg)
     {
-        this->m_HighByte = std::move(reg.m_HighByte);
-        this->m_LowByte  = std::move(reg.m_LowByte);
-
-        return *this;
+        this->m_Value = reg.m_Value;
+        return *this;    
     }
 
+    void ByteRegister::SetValue(const u8& value)
+    {
+        m_Value = value;
+    }
+
+    u8 ByteRegister::GetValue()
+    {
+        return m_Value;
+    }
+
+    void ByteRegister::SetBit(size_t bitIndex)
+    {
+        if (bitIndex > 7) 
+        {
+            return;
+        }
+
+        m_Value |= (1U << bitIndex);
+    }
+
+    void ByteRegister::ResetBit(size_t bitIndex)
+    {
+        if (bitIndex > 7) 
+        {
+            return;
+        }
+
+        m_Value &= ~(1U << bitIndex);
+    }
+
+    bool ByteRegister::BitIsSet(size_t bitIndex)
+    {
+        return (m_Value & (1U << bitIndex));
+    }
+
+    SharpRegister::SharpRegister(ByteRegister& highRegister, ByteRegister& lowRegister) 
+        : m_HighRegister(highRegister), m_LowRegister(lowRegister) {};
+        
     u16 SharpRegister::GetDoubleWord()
     {
-        return (static_cast<u16>(m_HighByte) << 8U) | (m_LowByte);
+        return (
+            (static_cast<u16>(m_HighRegister.GetValue()) << 8U) |
+            m_LowRegister.GetValue()
+        );
     }
 
-    u8 SharpRegister::GetWord(const bool highByte)
+    void SharpRegister::SetDoubleWord(const u16& doubleWord)
     {
-        return highByte ? m_HighByte : m_LowByte;
-    }
-
-    void SharpRegister::SetDoubleWord(const u16& word)
-    {
-        m_HighByte = (word & GB_HIGH_BYTE) >> 8U;
-        m_LowByte  =  word & GB_LOW_BYTE;
-    }
-
-    void SharpRegister::SetWord(const bool highByte, const u8& word)
-    {
-        if (highByte)
-        {
-            m_HighByte = word;
-        }
-        else
-        {
-            m_LowByte = word;
-        }
-    }
-
-    void SharpFlagsRegister::SetFlag(const SharpFlags flag, const bool raise)
-    {
-        if (raise)
-        {
-            m_LowByte |= static_cast<u8>(flag);
-        }
-        else
-        {
-            m_LowByte &= ~static_cast<u8>(flag);
-        }
-    }
-
-    bool SharpFlagsRegister::FlagIsRaised(const SharpFlags flag)
-    {
-        return m_LowByte & static_cast<u8>(flag);
-    }
-
-    void SharpFlagsRegister::SetWord(const bool highByte, const u8& word)
-    {
-        if (highByte)
-        {
-            m_HighByte = word;
-        }
-        else
-        {
-            m_LowByte = word & 0xF0;
-        }
-    }
-
-    void SharpFlagsRegister::SetDoubleWord(const u16& doubleWord)
-    {
-        m_HighByte = (doubleWord & GB_HIGH_BYTE) >> 8U;
-        m_LowByte =   doubleWord & 0xF0;
+        m_HighRegister.SetValue((doubleWord & GB_HIGH_BYTE) >> 8U);
+        m_LowRegister.SetValue(doubleWord & GB_LOW_BYTE);
     }
 }

@@ -16,3 +16,14 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "Core/Sharp/Sharp.hpp"
+
+#include <iostream>
+
+namespace GBcc {
+    Sharp::Sharp() : 
+        m_AF(m_A, m_F),
+        m_BC(m_B, m_C),
+        m_DE(m_D, m_E),
+        m_HL(m_H, m_L)
+    {}
+}

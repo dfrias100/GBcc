@@ -1,8 +1,7 @@
 add_executable(RegisterInstantiationTest RegisterInstantiationTest.cpp)
 add_executable(RegisterCopyTest RegisterCopyTest.cpp)
-add_executable(RegisterMoveTest RegisterMoveTest.cpp)
 add_executable(RegisterSetTest RegisterSetTest.cpp)
-add_executable(RegisterFlagsTest RegisterFlagsTest.cpp)
+add_executable(RegisterBitTest RegisterBitTest.cpp)
 
 target_include_directories(
     RegisterInstantiationTest PRIVATE
@@ -13,10 +12,6 @@ target_include_directories(
     RegisterCopyTest PRIVATE
     "../include"
 )
-target_include_directories(
-    RegisterMoveTest PRIVATE
-    "../include"
-)
 
 target_include_directories(
     RegisterSetTest PRIVATE
@@ -24,15 +19,14 @@ target_include_directories(
 )
 
 target_include_directories(
-    RegisterFlagsTest PRIVATE
+    RegisterBitTest PRIVATE
     "../include"
 )
 
 target_link_libraries(RegisterInstantiationTest SharpRegister)
 target_link_libraries(RegisterCopyTest SharpRegister)
-target_link_libraries(RegisterMoveTest SharpRegister)
 target_link_libraries(RegisterSetTest SharpRegister)
-target_link_libraries(RegisterFlagsTest SharpRegister)
+target_link_libraries(RegisterBitTest SharpRegister)
 
 add_test(
     NAME RegisterInstantiationTest
@@ -45,16 +39,11 @@ add_test(
 )
 
 add_test(
-    NAME RegisterMoveTest
-    COMMAND RegisterMoveTest
-)
-
-add_test(
     NAME RegisterSetTest
     COMMAND RegisterSetTest
 )
 
 add_test(
-    NAME RegisterFlagsTest
-    COMMAND RegisterFlagsTest
+    NAME RegisterBitTest
+    COMMAND RegisterBitTest
 )
