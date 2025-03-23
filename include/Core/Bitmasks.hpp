@@ -19,6 +19,12 @@
 
 namespace GBcc
 {
-    constexpr u16 GB_HIGH_BYTE = 0xFF00U;
-    constexpr u16  GB_LOW_BYTE = 0x00FFU;
+    constexpr u16 GB_HIGH_BYTE = 0xFF'00U;
+    constexpr u16  GB_LOW_BYTE = 0x00'FFU;
+
+    constexpr u8 GB_HIGH_NIBBLE = 0xF'0U;
+    constexpr u8  GB_LOW_NIBBLE = 0x0'FU;
+
+    constexpr u32 U32_HIGH_HALF = 0xFFFF'0000U;
+    constexpr u32  U32_LOW_HALF = 0x0000'FFFFU;
 }

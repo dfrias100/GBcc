@@ -41,7 +41,7 @@ namespace GBcc
         m_Value = value;
     }
 
-    u8 ByteRegister::GetValue()
+    u8 ByteRegister::GetValue() const
     {
         return m_Value;
     }
@@ -66,7 +66,7 @@ namespace GBcc
         m_Value &= ~(1U << bitIndex);
     }
 
-    bool ByteRegister::BitIsSet(size_t bitIndex)
+    bool ByteRegister::BitIsSet(size_t bitIndex) const
     {
         return (m_Value & (1U << bitIndex));
     }
@@ -74,7 +74,7 @@ namespace GBcc
     SharpRegister::SharpRegister(ByteRegister& highRegister, ByteRegister& lowRegister) 
         : m_HighRegister(highRegister), m_LowRegister(lowRegister) {};
         
-    u16 SharpRegister::GetDoubleWord()
+    u16 SharpRegister::GetDoubleWord() const
     {
         return (
             (static_cast<u16>(m_HighRegister.GetValue()) << 8U) |

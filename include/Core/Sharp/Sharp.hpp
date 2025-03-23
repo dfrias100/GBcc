@@ -20,8 +20,6 @@
 #include "Types.hpp"
 #include "Core/Sharp/SharpRegister.hpp"
 
-#include <variant>
-
 namespace GBcc
 {
     enum PointerOperation
@@ -31,7 +29,7 @@ namespace GBcc
         Nothing   = 0x3
     };
 
-    enum class SharpFlags : u8
+    enum class SharpFlags
     {
         ZERO    = 7,
         NOT_ADD = 6,
@@ -67,15 +65,22 @@ namespace GBcc
         u8  FetchWord();
         u16 FetchDoubleWord();
 
-        void RegisterToRegisterWord(const ByteRegister& source, const ByteRegister& destination);
-        void SetRegisterWord(const ByteRegister& destination, const u8& word);        
-        void UnsignedAddWord(const u8& lhs, const u8& rhs);
-        void SignedAddWord(const u8& lhs, const u8& rhs);
+        template <typename T>
+        bool TestBit(const T& val, size_t bitIndex) const;
+
+        inline void SetFlag(const SharpFlags& flag);
+        inline void ResetFlag(const SharpFlags& flag);
+
+        inline void UpdateFlag(const SharpFlags& flag, const bool& set);
+
+        void RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination);
+        u8   UnsignedAddWord(const u8& lhs, const u8& rhs);
+        u8   SignedAddWord(const u8& lhs, const u8& rhs);
         void AddRegisterToAccumulator(const ByteRegister& source);
-        void LoadValueToRegisterWord(const ByteRegister& destination);
+        void LoadValueToRegisterWord(ByteRegister& destination);
         void LoadIndirectToRegisterWord(
             const SharpRegister& addressSource,
-            const ByteRegister& destination, 
+            ByteRegister& destination, 
             const PointerOperation ptrOp, 
             const bool addressIsImmediate = false
         );
@@ -86,9 +91,9 @@ namespace GBcc
             const bool addressIsImmediate = false
         );
 
-        void RegisterToRegisterDoubleWord(const SharpRegister& source, const SharpRegister& destination);
+        void RegisterToRegisterDoubleWord(const SharpRegister& source, SharpRegister& destination);
         void SetRegisterDoubleWord(const SharpRegister& destination, const u16& doubleWord);
-        void UnsignedAddDoubleWord(const u16& lhs, const u16& rhs);
+        u16  UnsignedAddDoubleWord(const u16& lhs, const u16& rhs);
         
         public:
         Sharp();

@@ -36,12 +36,12 @@ namespace GBcc
         ~ByteRegister() = default;
 
         void SetValue(const u8& value);
-        u8 GetValue();
+        u8 GetValue() const;
 
         void SetBit(size_t bitIndex);
         void ResetBit(size_t bitIndex);
 
-        bool BitIsSet(size_t bitIndex);
+        bool BitIsSet(size_t bitIndex) const;
     };
 
     class SharpRegister
@@ -60,7 +60,7 @@ namespace GBcc
 
         ~SharpRegister() = default;
 
-        u16 GetDoubleWord();
+        u16 GetDoubleWord() const;
 
         void SetDoubleWord(const u16& doubleWord);
     };
