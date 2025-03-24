@@ -24,9 +24,9 @@ namespace GBcc
 {
     enum PointerOperation
     {
-        Increment = 0x1,
-        Decrement = 0x2,
-        Nothing   = 0x3
+        Increment = 1,
+        Decrement = 2,
+        Nothing   = 3
     };
 
     enum class SharpFlags
@@ -37,6 +37,8 @@ namespace GBcc
         CARRY   = 4
     };
     
+    class Memory;
+
     class Sharp
     {
         private:
@@ -62,6 +64,8 @@ namespace GBcc
 
         u16 m_Operand;
 
+        Memory* const m_pMemBus;
+
         u8  FetchWord();
         u16 FetchDoubleWord();
 
@@ -75,17 +79,16 @@ namespace GBcc
 
         void RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination);
         u8   UnsignedAddWord(const u8& lhs, const u8& rhs);
-        u8   SignedAddWord(const u8& lhs, const u8& rhs);
         void AddRegisterToAccumulator(const ByteRegister& source);
         void LoadValueToRegisterWord(ByteRegister& destination);
-        void LoadIndirectToRegisterWord(
-            const SharpRegister& addressSource,
+        void LoadAddressToRegisterWord(
+            SharpRegister& addressSource,
             ByteRegister& destination, 
             const PointerOperation ptrOp, 
             const bool addressIsImmediate = false
         );
         void StoreRegisterToMemoryWord(
-            const SharpRegister& addressDestination,
+            SharpRegister& addressDestination,
             const ByteRegister& source, 
             const PointerOperation ptrOp, 
             const bool addressIsImmediate = false
@@ -96,7 +99,7 @@ namespace GBcc
         u16  UnsignedAddDoubleWord(const u16& lhs, const u16& rhs);
         
         public:
-        Sharp();
+        Sharp(Memory* const& pMemBus);
 
         u64 StepExecution();
     };

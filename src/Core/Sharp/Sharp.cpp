@@ -16,16 +16,18 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include "Core/Sharp/Sharp.hpp"
+#include "Core/Memory.hpp"
 #include "Core/Bitmasks.hpp"
 
 #include <iostream>
 
 namespace GBcc {
-    Sharp::Sharp() : 
+    Sharp::Sharp(Memory* const& pMemBus) : 
         m_AF(m_A, m_F),
         m_BC(m_B, m_C),
         m_DE(m_D, m_E),
-        m_HL(m_H, m_L)
+        m_HL(m_H, m_L),
+        m_pMemBus(pMemBus)
     {}
 
     template <typename T>
@@ -107,5 +109,72 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, false);
 
         return result;
+    }
+
+    void Sharp::AddRegisterToAccumulator(const ByteRegister& source)
+    {
+        const u8 operand = source.GetValue();
+        const u8 result = UnsignedAddWord(m_A.GetValue(), operand);
+        m_A.SetValue(result);
+    }
+
+    void Sharp::LoadValueToRegisterWord(ByteRegister& destination)
+    {
+        const u8 value = m_Operand & GB_LOW_BYTE;
+        destination.SetValue(value);
+    }
+
+    void Sharp::LoadAddressToRegisterWord(
+        SharpRegister& addressSource,
+        ByteRegister& destination,
+        const PointerOperation ptrOp,
+        const bool addressIsImmediate = false
+    )
+    {
+        u16 address = (
+            addressIsImmediate ? 
+            m_Operand : addressSource.GetDoubleWord()
+        );
+
+        const u8 val = m_pMemBus->ReadWord(address);
+        destination.SetValue(val);
+
+        if (ptrOp == PointerOperation::Increment)
+        {
+            address++;
+            addressSource.SetDoubleWord(address);
+        }
+        else if (ptrOp == PointerOperation::Decrement)
+        {
+            address--;
+            addressSource.SetDoubleWord(address);
+        }
+    }
+
+    void Sharp::StoreRegisterToMemoryWord(
+        SharpRegister& addressDestination,
+        const ByteRegister& source, 
+        const PointerOperation ptrOp, 
+        const bool addressIsImmediate = false
+    )
+    {
+        u16 address = (
+            addressIsImmediate ? 
+            m_Operand : addressDestination.GetDoubleWord()
+        );
+
+        const u8 val = source.GetValue();
+        m_pMemBus->WriteWord(address, val);
+
+        if (ptrOp == PointerOperation::Increment)
+        {
+            address++;
+            addressDestination.SetDoubleWord(address);
+        }
+        else if (ptrOp == PointerOperation::Decrement)
+        {
+            address--;
+            addressDestination.SetDoubleWord(address);
+        }
     }
 }
