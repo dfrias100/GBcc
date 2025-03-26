@@ -63,22 +63,28 @@ namespace GBcc {
         }
     }
 
+    inline bool Sharp::FlagIsSet(const SharpFlags& flag)
+    {
+        return m_F.BitIsSet(static_cast<size_t>(flag));
+    }
+
     void Sharp::RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination)    
     {
         auto val = source.GetValue();
         destination.SetValue(val);
     }
     
-    u8 Sharp::UnsignedAddWord(const u8& lhs, const u8& rhs)
+    u8 Sharp::UnsignedAddWord(const u8& lhs, const u8& rhs, const bool& shouldAddCarry)
     {
+        u8 carry = shouldAddCarry ? static_cast<u8>(FlagIsSet(SharpFlags::CARRY)) : 0U;
         u8 lhsLowNibble = lhs & GB_LOW_NIBBLE;
         u8 rhsLowNibble = rhs & GB_LOW_NIBBLE;
 
-        u8 halfAdd = lhsLowNibble + rhsLowNibble;
+        u8 halfAdd = lhsLowNibble + rhsLowNibble + carry;
         bool shouldSetHalfCarry = TestBit(halfAdd, 4U);
         UpdateFlag(SharpFlags::HALF, shouldSetHalfCarry);
 
-        u16 result16 = lhs + rhs;
+        u16 result16 = lhs + rhs + carry;
         bool shouldSetCarry = TestBit(result16, 8U);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
 
@@ -89,6 +95,146 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, false);
 
         return result;
+    }
+
+    u8 Sharp::UnsignedSubtractWord(const u8& lhs, const u8& rhs, const bool& shouldBorrow)
+    {
+        const u8 rhsNegative = ~rhs + (
+            shouldBorrow ?
+            static_cast<u8>(FlagIsSet(SharpFlags::CARRY)) :
+            1U
+        );
+        const u8 result = UnsignedAddWord(lhs, rhsNegative, false);
+        UpdateFlag(SharpFlags::NOT_ADD, true);
+
+        return result;
+    }
+
+    void Sharp::DecrementRegisterWord(ByteRegister& reg)
+    {
+        const bool bCurrentCarry = FlagIsSet(SharpFlags::CARRY);
+
+        const u8 currentRegisterValue = reg.GetValue();
+        const u8 decrementedRegister = UnsignedSubtractWord(currentRegisterValue, 1U);
+
+        reg.SetValue(decrementedRegister);
+
+        UpdateFlag(SharpFlags::CARRY, bCurrentCarry);
+    }
+
+    void Sharp::IncrementRegisterWord(ByteRegister& reg)
+    {
+        const bool bCurrentCarry = FlagIsSet(SharpFlags::CARRY);
+
+        const u8 currentRegisterValue = reg.GetValue();
+        const u8 incrementedRegister = UnsignedAddWord(currentRegisterValue, 1U);
+        
+        reg.SetValue(incrementedRegister);
+
+        UpdateFlag(SharpFlags::CARRY, bCurrentCarry); 
+    }
+
+    void Sharp::IncrementWordAtHL()
+    {
+        const bool bCurrentCarry = FlagIsSet(SharpFlags::CARRY);
+
+        const u16 address = m_HL.GetDoubleWord();
+        const u8 currentValue = m_pMemBus->ReadWord(address);
+        const u8 incrementedValue = UnsignedAddWord(currentValue, 1U);
+
+        m_pMemBus->WriteWord(address, incrementedValue);
+
+        UpdateFlag(SharpFlags::CARRY, bCurrentCarry);
+    }
+
+    void Sharp::AddRegisterWordToAccumulator(const ByteRegister& source)
+    {
+        const u8 operand = source.GetValue();
+        const u8 result = UnsignedAddWord(m_A.GetValue(), operand);
+        m_A.SetValue(result);
+    }
+
+    void Sharp::LoadWordToRegister(ByteRegister& destination)
+    {
+        const u8 value = m_Operand & GB_LOW_BYTE;
+        destination.SetValue(value);
+    }
+
+    void Sharp::LoadWordFromAddress(
+        std::optional<SharpRegister&> addressSourceRegister,
+        ByteRegister& destination,
+        const PointerOperation ptrOp
+    )
+    {
+        u16 address;
+        if (addressSourceRegister.has_value())
+        {
+            auto& registerReference = addressSourceRegister.value();
+            address = registerReference.GetDoubleWord();
+
+            if (ptrOp == PointerOperation::Increment)
+            {
+                address++;
+                registerReference.SetDoubleWord(address);
+            }
+            else if (ptrOp == PointerOperation::Decrement)
+            {
+                address--;
+                registerReference.SetDoubleWord(address);
+            }
+        }
+        else
+        {
+            address = m_Operand;
+        }
+
+        const u8 val = m_pMemBus->ReadWord(address);
+        destination.SetValue(val);
+
+    }
+
+    void Sharp::StoreWordToMemory(
+        std::optional<SharpRegister&> addressDestinationRegister,
+        const ByteRegister& source, 
+        const PointerOperation ptrOp
+    )
+    {
+        u16 address;
+        if (addressDestinationRegister.has_value())
+        {
+            auto& registerReference = addressDestinationRegister.value();
+            address = registerReference.GetDoubleWord();
+
+            if (ptrOp == PointerOperation::Increment)
+            {
+                address++;
+                registerReference.SetDoubleWord(address);
+            }
+            else if (ptrOp == PointerOperation::Decrement)
+            {
+                address--;
+                registerReference.SetDoubleWord(address);
+            }
+        }
+        else
+        {
+            address = m_Operand;
+        }
+
+        const u8 val = source.GetValue();
+        m_pMemBus->WriteWord(address, val);
+    }
+
+    void Sharp::IncrementRegisterDoubleWord(SharpRegister& reg)
+    {
+        const u16 incrementedRegister = reg.GetDoubleWord() + 1U;
+        reg.SetDoubleWord(incrementedRegister);
+    }
+
+    void Sharp::DecrementRegisterDoubleWord(SharpRegister& reg)
+    {
+        const u16 decrementedRegister = reg.GetDoubleWord() - 1U;
+        reg.SetDoubleWord(decrementedRegister);
     }
 
     u16 Sharp::UnsignedAddDoubleWord(const u16& lhs, const u16& rhs)
@@ -109,72 +255,5 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, false);
 
         return result;
-    }
-
-    void Sharp::AddRegisterToAccumulator(const ByteRegister& source)
-    {
-        const u8 operand = source.GetValue();
-        const u8 result = UnsignedAddWord(m_A.GetValue(), operand);
-        m_A.SetValue(result);
-    }
-
-    void Sharp::LoadValueToRegisterWord(ByteRegister& destination)
-    {
-        const u8 value = m_Operand & GB_LOW_BYTE;
-        destination.SetValue(value);
-    }
-
-    void Sharp::LoadAddressToRegisterWord(
-        SharpRegister& addressSource,
-        ByteRegister& destination,
-        const PointerOperation ptrOp,
-        const bool addressIsImmediate = false
-    )
-    {
-        u16 address = (
-            addressIsImmediate ? 
-            m_Operand : addressSource.GetDoubleWord()
-        );
-
-        const u8 val = m_pMemBus->ReadWord(address);
-        destination.SetValue(val);
-
-        if (ptrOp == PointerOperation::Increment)
-        {
-            address++;
-            addressSource.SetDoubleWord(address);
-        }
-        else if (ptrOp == PointerOperation::Decrement)
-        {
-            address--;
-            addressSource.SetDoubleWord(address);
-        }
-    }
-
-    void Sharp::StoreRegisterToMemoryWord(
-        SharpRegister& addressDestination,
-        const ByteRegister& source, 
-        const PointerOperation ptrOp, 
-        const bool addressIsImmediate = false
-    )
-    {
-        u16 address = (
-            addressIsImmediate ? 
-            m_Operand : addressDestination.GetDoubleWord()
-        );
-
-        const u8 val = source.GetValue();
-        m_pMemBus->WriteWord(address, val);
-
-        if (ptrOp == PointerOperation::Increment)
-        {
-            address++;
-            addressDestination.SetDoubleWord(address);
-        }
-        else if (ptrOp == PointerOperation::Decrement)
-        {
-            address--;
-            addressDestination.SetDoubleWord(address);
-        }
     }
 }
