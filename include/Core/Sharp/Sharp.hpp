@@ -98,11 +98,12 @@ namespace GBcc
             const PointerOperation ptrOp
         );
 
-        void RegisterToRegisterDoubleWord(const SharpRegister& source, SharpRegister& destination);
-        void SetRegisterDoubleWord(const SharpRegister& destination, const u16& doubleWord);
+        void LoadDoubleWordToRegister(SharpRegister& destination);
         void IncrementRegisterDoubleWord(SharpRegister& reg);
         void DecrementRegisterDoubleWord(SharpRegister& reg);
         u16  UnsignedAddDoubleWord(const u16& lhs, const u16& rhs);
+        void PushRegisters(const SharpRegister& reg);
+        void PopRegisters(SharpRegister& reg);
         
         public:
         Sharp(Memory* const& pMemBus);

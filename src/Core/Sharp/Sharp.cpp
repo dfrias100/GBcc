@@ -225,6 +225,11 @@ namespace GBcc {
         m_pMemBus->WriteWord(address, val);
     }
 
+    void Sharp::LoadDoubleWordToRegister(SharpRegister& destination)
+    {
+        destination.SetDoubleWord(m_Operand);
+    }
+
     void Sharp::IncrementRegisterDoubleWord(SharpRegister& reg)
     {
         const u16 incrementedRegister = reg.GetDoubleWord() + 1U;
@@ -255,5 +260,19 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, false);
 
         return result;
+    }
+
+    void Sharp::PushRegisters(const SharpRegister& reg)
+    {
+        m_SP -= 2;
+        const u16 registerValue = reg.GetDoubleWord();
+        m_pMemBus->WriteDoubleWord(m_SP, registerValue);
+    }
+
+    void Sharp::PopRegisters(SharpRegister& reg)
+    {
+        const u16 registerValue = m_pMemBus->ReadDoubleWord(m_SP);
+        reg.SetDoubleWord(registerValue);
+        m_SP += 2;
     }
 }
