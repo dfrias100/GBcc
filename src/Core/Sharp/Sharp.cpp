@@ -63,6 +63,12 @@ namespace GBcc {
         }
     }
 
+    inline void Sharp::ComplementCarry()
+    {
+        bool bCurrentCarry = ~FlagIsSet(SharpFlags::CARRY);
+        UpdateFlag(SharpFlags::CARRY, bCurrentCarry);
+    }
+
     inline bool Sharp::FlagIsSet(const SharpFlags& flag)
     {
         return m_F.BitIsSet(static_cast<size_t>(flag));
@@ -108,6 +114,74 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, true);
 
         return result;
+    }
+
+    u8 Sharp::RotateLeft(const u8 value, const bool bCircular)
+    {
+        const u8 outBit = (value & 0b1000'0000) >> 7U;
+        const u8 inBit  = bCircular ? outBit : FlagIsSet(SharpFlags::CARRY);
+        
+        value <<= 1U;
+        value |= inBit;
+
+        UpdateFlag(SharpFlags::CARRY, outBit);
+
+        return value;
+    }
+
+    u8 Sharp::RotateRight(const u8 value, const bool bCircular)
+    {
+        const u8 outBit = value & 0b1;
+        const u8 inBit = bCircular ? outBit : FlagIsSet(SharpFlags::CARRY);
+
+        value >>= 1U;
+        value |= (inBit << 7U);
+
+        UpdateFlag(SharpFlags::CARRY, outBit);
+
+        return value;
+    }
+
+    void Sharp::AndAccumulator(const u8 value)
+    {
+        u8 currentAccumulator = m_A.GetValue();
+        currentAccumulator &= value;
+
+        bool isZero = currentAccumulator == 0U; 
+        UpdateFlag(SharpFlags::ZERO, isZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, true);
+        UpdateFlag(SharpFlags::CARRY, false);
+
+        m_A.SetValue(currentAccumulator);
+    }
+
+    void Sharp::XorAccumulator(const u8 value)
+    {        
+        u8 currentAccumulator = m_A.GetValue();
+        currentAccumulator ^= value;
+
+        bool isZero = currentAccumulator == 0U; 
+        UpdateFlag(SharpFlags::ZERO, isZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
+        UpdateFlag(SharpFlags::CARRY, false);
+
+        m_A.SetValue(currentAccumulator);
+    }
+
+    void Sharp::OrAccumulator(const u8 value)
+    {
+        const u8 currentAccumulator = m_A.GetValue();
+        currentAccumulator |= value;
+
+        bool isZero = currentAccumulator == 0U; 
+        UpdateFlag(SharpFlags::ZERO, isZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
+        UpdateFlag(SharpFlags::CARRY, false);
+
+        m_A.SetValue(currentAccumulator);
     }
 
     void Sharp::DecrementRegisterWord(ByteRegister& reg)

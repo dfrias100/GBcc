@@ -77,11 +77,17 @@ namespace GBcc
         inline void SetFlag(const SharpFlags& flag);
         inline void ResetFlag(const SharpFlags& flag);
         inline void UpdateFlag(const SharpFlags& flag, const bool set);
+        inline void ComplementCarry();
         inline bool FlagIsSet(const SharpFlags& flag);
 
         void RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination);
         u8   UnsignedAddWord(const u8 lhs, const u8 rhs, const bool shouldAddCarry = false);
         u8   UnsignedSubtractWord(const u8 lhs, const u8 rhs, const bool shouldBorrow = false);
+        u8   RotateLeft(const u8 value, const bool bCircular);
+        u8   RotateRight(const u8 value, const bool bCircular);
+        void AndAccumulator(const u8 value);
+        void OrAccumulator(const u8 value);
+        void XorAccumulator(const u8 value);
         void DecrementRegisterWord(ByteRegister& reg);
         void IncrementRegisterWord(ByteRegister& reg);
         void IncrementWordAtHL();
