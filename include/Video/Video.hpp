@@ -51,7 +51,7 @@ namespace GBcc {
         GLuint m_ShaderProgram;
 
         public:
-        static Video& getInstance();
+        static Video& GetInstance();
         void UpdateTexture(const Framebuffer& pixels);
         void Draw();
         bool ShouldClose();

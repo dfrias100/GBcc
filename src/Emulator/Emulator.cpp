@@ -22,11 +22,11 @@
 #include <sstream>
 
 namespace GBcc {
-    Emulator::Emulator() : m_Video(Video::getInstance()) {}
+    Emulator::Emulator() : m_Video(Video::GetInstance()) {}
     
     Emulator::~Emulator() { }
 
-    void Emulator::LimitFramerate(const float& fps)
+    void Emulator::LimitFramerate(const float fps)
     {
         float expectedFrametime = 1e9f / fps;
         auto chronoExpectedFrametime = std::chrono::nanoseconds(static_cast<u64>(expectedFrametime));
@@ -49,7 +49,7 @@ namespace GBcc {
         u64 hScroll = 0;
         u64 vScroll = 0;
 
-        auto DrawChecker = [&framebuffer, colorLut](const u64& hScroll, const u64& vScroll)
+        auto DrawChecker = [&framebuffer, colorLut](const u64 hScroll, const u64 vScroll)
         {
             u64 color1 = 0;
             u64 color2 = 2;

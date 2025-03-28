@@ -38,10 +38,10 @@ namespace GBcc {
         Memory();
         ~Memory() = default;
 
-        void WriteWord(const u16& address, const u8& data);
-        void WriteDoubleWord(const u16& address, const u16& data);
+        void WriteWord(const u16 address, const u8 data);
+        void WriteDoubleWord(const u16 address, const u16 data);
 
-        u8 ReadWord(const u16& address);
-        u16 ReadDoubleWord(const u16& address);
+        u8 ReadWord(const u16 address);
+        u16 ReadDoubleWord(const u16 address);
     };
 }

@@ -30,7 +30,7 @@ namespace GBcc {
         std::chrono::steady_clock m_Timer;
         std::chrono::time_point<std::chrono::steady_clock> m_StartFrame;
 
-        void LimitFramerate(const float& fps);
+        void LimitFramerate(const float fps);
 
         public:
         Emulator();

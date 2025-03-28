@@ -27,7 +27,7 @@ namespace GBcc
 
         public:
         ByteRegister();
-        ByteRegister(const u8& initializerValue);
+        ByteRegister(const u8 initializerValue);
         ByteRegister(const ByteRegister& reg);
         
         ByteRegister& operator=(const ByteRegister& reg);
@@ -35,7 +35,7 @@ namespace GBcc
 
         ~ByteRegister() = default;
 
-        void SetValue(const u8& value);
+        void SetValue(const u8 value);
         u8 GetValue() const;
 
         void SetBit(size_t bitIndex);
@@ -62,6 +62,6 @@ namespace GBcc
 
         u16 GetDoubleWord() const;
 
-        void SetDoubleWord(const u16& doubleWord);
+        void SetDoubleWord(const u16 doubleWord);
     };
 };

@@ -31,7 +31,7 @@ namespace GBcc {
     {}
 
     template <typename T>
-    bool Sharp::TestBit(const T& val, const size_t bitIndex) const
+    bool Sharp::TestBit(const T val, const size_t bitIndex) const
     {
         if (bitIndex > ((sizeof(T) * 8U) - 1))
         {
@@ -51,7 +51,7 @@ namespace GBcc {
         m_F.ResetBit(static_cast<size_t>(flag));
     }
 
-    inline void Sharp::UpdateFlag(const SharpFlags& flag, const bool& set)
+    inline void Sharp::UpdateFlag(const SharpFlags& flag, const bool set)
     {
         if (set)
         {
@@ -74,7 +74,7 @@ namespace GBcc {
         destination.SetValue(val);
     }
     
-    u8 Sharp::UnsignedAddWord(const u8& lhs, const u8& rhs, const bool& shouldAddCarry)
+    u8 Sharp::UnsignedAddWord(const u8 lhs, const u8 rhs, const bool& shouldAddCarry)
     {
         u8 carry = shouldAddCarry ? static_cast<u8>(FlagIsSet(SharpFlags::CARRY)) : 0U;
         u8 lhsLowNibble = lhs & GB_LOW_NIBBLE;
@@ -97,7 +97,7 @@ namespace GBcc {
         return result;
     }
 
-    u8 Sharp::UnsignedSubtractWord(const u8& lhs, const u8& rhs, const bool& shouldBorrow)
+    u8 Sharp::UnsignedSubtractWord(const u8 lhs, const u8 rhs, const bool& shouldBorrow)
     {
         const u8 rhsNegative = ~rhs + (
             shouldBorrow ?
@@ -242,7 +242,7 @@ namespace GBcc {
         reg.SetDoubleWord(decrementedRegister);
     }
 
-    u16 Sharp::UnsignedAddDoubleWord(const u16& lhs, const u16& rhs)
+    u16 Sharp::UnsignedAddDoubleWord(const u16 lhs, const u16 rhs)
     {
         u16 lhsMasked = lhs & 0x0F'FFU;
         u16 rhsMasked = rhs & 0x0F'FFU;

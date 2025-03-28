@@ -52,7 +52,7 @@ namespace GBcc
         "   fragColor = texture(textureSampler, texCoord);\n"
         "}\0";
     
-    Video& Video::getInstance()
+    Video& Video::GetInstance()
     {
         static Video instance;
         return instance;

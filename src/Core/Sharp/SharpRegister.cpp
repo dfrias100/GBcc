@@ -23,7 +23,7 @@
 namespace GBcc 
 {
     ByteRegister::ByteRegister() : m_Value(0) {}
-    ByteRegister::ByteRegister(const u8& initializerValue) : m_Value(initializerValue) {}
+    ByteRegister::ByteRegister(const u8 initializerValue) : m_Value(initializerValue) {}
     
     ByteRegister::ByteRegister(const ByteRegister& reg)
     {
@@ -36,7 +36,7 @@ namespace GBcc
         return *this;    
     }
 
-    void ByteRegister::SetValue(const u8& value)
+    void ByteRegister::SetValue(const u8 value)
     {
         m_Value = value;
     }
@@ -82,7 +82,7 @@ namespace GBcc
         );
     }
 
-    void SharpRegister::SetDoubleWord(const u16& doubleWord)
+    void SharpRegister::SetDoubleWord(const u16 doubleWord)
     {
         m_HighRegister.SetValue((doubleWord & GB_HIGH_BYTE) >> 8U);
         m_LowRegister.SetValue(doubleWord & GB_LOW_BYTE);

@@ -35,7 +35,7 @@ namespace GBcc
         );
     }
 
-    u8 Memory::ReadWord(const u16& address)
+    u8 Memory::ReadWord(const u16 address)
     {
         u16 trueAddress;
         if (address <= GB_BOOTROM_SIZE)
@@ -76,7 +76,7 @@ namespace GBcc
         }
     }
 
-    u16 Memory::ReadDoubleWord(const u16& address)
+    u16 Memory::ReadDoubleWord(const u16 address)
     {
         return (
             (static_cast<u16>(ReadWord(address + 1U)) << 8U) | 
@@ -84,7 +84,7 @@ namespace GBcc
         );
     }
 
-    void Memory::WriteWord(const u16& address, const u8& data)
+    void Memory::WriteWord(const u16 address, const u8 data)
     {
         u16 trueAddress;
         if (address >= 0xC000U && address <= 0xDFFFU)
@@ -115,7 +115,7 @@ namespace GBcc
         }
     }
 
-    void Memory::WriteDoubleWord(const u16& address, const u16& data)
+    void Memory::WriteDoubleWord(const u16 address, const u16 data)
     {
         WriteWord(address    , (data & 0x00FF));
         WriteWord(address + 1, (data & 0xFF00) >> 8U);
