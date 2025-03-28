@@ -22,7 +22,7 @@
 #include <iostream>
 
 namespace GBcc {
-    Sharp::Sharp(Memory* const& pMemBus) : 
+    Sharp::Sharp(Memory* const pMemBus) : 
         m_AF(m_A, m_F),
         m_BC(m_B, m_C),
         m_DE(m_D, m_E),
@@ -35,7 +35,7 @@ namespace GBcc {
     {
         if (bitIndex > ((sizeof(T) * 8U) - 1))
         {
-            return;
+            return false;
         } 
 
         return (val & (1U << bitIndex));
@@ -74,7 +74,7 @@ namespace GBcc {
         destination.SetValue(val);
     }
     
-    u8 Sharp::UnsignedAddWord(const u8 lhs, const u8 rhs, const bool& shouldAddCarry)
+    u8 Sharp::UnsignedAddWord(const u8 lhs, const u8 rhs, const bool shouldAddCarry)
     {
         u8 carry = shouldAddCarry ? static_cast<u8>(FlagIsSet(SharpFlags::CARRY)) : 0U;
         u8 lhsLowNibble = lhs & GB_LOW_NIBBLE;
@@ -97,7 +97,7 @@ namespace GBcc {
         return result;
     }
 
-    u8 Sharp::UnsignedSubtractWord(const u8 lhs, const u8 rhs, const bool& shouldBorrow)
+    u8 Sharp::UnsignedSubtractWord(const u8 lhs, const u8 rhs, const bool shouldBorrow)
     {
         const u8 rhsNegative = ~rhs + (
             shouldBorrow ?
@@ -161,26 +161,25 @@ namespace GBcc {
     }
 
     void Sharp::LoadWordFromAddress(
-        std::optional<SharpRegister&> addressSourceRegister,
+        SharpRegister const* addressSourceRegister,
         ByteRegister& destination,
         const PointerOperation ptrOp
     )
     {
         u16 address;
-        if (addressSourceRegister.has_value())
+        if (addressSourceRegister != nullptr)
         {
-            auto& registerReference = addressSourceRegister.value();
-            address = registerReference.GetDoubleWord();
+            address = addressSourceRegister->GetDoubleWord();
 
             if (ptrOp == PointerOperation::Increment)
             {
                 address++;
-                registerReference.SetDoubleWord(address);
+                addressSourceRegister->SetDoubleWord(address);
             }
             else if (ptrOp == PointerOperation::Decrement)
             {
                 address--;
-                registerReference.SetDoubleWord(address);
+                addressSourceRegister->SetDoubleWord(address);
             }
         }
         else
@@ -194,26 +193,25 @@ namespace GBcc {
     }
 
     void Sharp::StoreWordToMemory(
-        std::optional<SharpRegister&> addressDestinationRegister,
+        SharpRegister const* addressDestinationRegister,
         const ByteRegister& source, 
         const PointerOperation ptrOp
     )
     {
         u16 address;
-        if (addressDestinationRegister.has_value())
-        {
-            auto& registerReference = addressDestinationRegister.value();
-            address = registerReference.GetDoubleWord();
+        if (addressDestinationRegister != nullptr)
+        {;
+            address = addressDestinationRegister->GetDoubleWord();
 
             if (ptrOp == PointerOperation::Increment)
             {
                 address++;
-                registerReference.SetDoubleWord(address);
+                addressDestinationRegister->SetDoubleWord(address);
             }
             else if (ptrOp == PointerOperation::Decrement)
             {
                 address--;
-                registerReference.SetDoubleWord(address);
+                addressDestinationRegister->SetDoubleWord(address);
             }
         }
         else

@@ -88,12 +88,12 @@ namespace GBcc
         void AddRegisterWordToAccumulator(const ByteRegister& source);
         void LoadWordToRegister(ByteRegister& destination);
         void LoadWordFromAddress(
-            std::optional<SharpRegister&> addressSourceRegister,
+            SharpRegister const* addressSourceRegister,
             ByteRegister& destination, 
             const PointerOperation ptrOp
         );
         void StoreWordToMemory(
-            std::optional<SharpRegister&> addressDestinationRegister,
+            SharpRegister const* addressDestinationRegister,
             const ByteRegister& source, 
             const PointerOperation ptrOp
         );
