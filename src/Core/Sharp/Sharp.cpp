@@ -121,12 +121,15 @@ namespace GBcc {
         const u8 outBit = (value & 0b1000'0000) >> 7U;
         const u8 inBit  = bCircular ? outBit : FlagIsSet(SharpFlags::CARRY);
         
-        value <<= 1U;
-        value |= inBit;
+        u8 newValue = value << 1U;
+        newValue |= inBit;
 
+        UpdateFlag(SharpFlags::ZERO, false);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, outBit);
 
-        return value;
+        return newValue;
     }
 
     u8 Sharp::RotateRight(const u8 value, const bool bCircular)
@@ -134,12 +137,15 @@ namespace GBcc {
         const u8 outBit = value & 0b1;
         const u8 inBit = bCircular ? outBit : FlagIsSet(SharpFlags::CARRY);
 
-        value >>= 1U;
-        value |= (inBit << 7U);
+        u8 newValue = value >> 1U;
+        newValue |= (inBit << 7U);
 
+        UpdateFlag(SharpFlags::ZERO, false);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, outBit);
 
-        return value;
+        return newValue;
     }
 
     void Sharp::AndAccumulator(const u8 value)
@@ -158,10 +164,9 @@ namespace GBcc {
 
     void Sharp::XorAccumulator(const u8 value)
     {        
-        u8 currentAccumulator = m_A.GetValue();
-        currentAccumulator ^= value;
-
-        bool isZero = currentAccumulator == 0U; 
+        const u8 currentAccumulator = m_A.GetValue() ^ value;
+        
+        const bool isZero = currentAccumulator == 0U; 
         UpdateFlag(SharpFlags::ZERO, isZero);
         UpdateFlag(SharpFlags::NOT_ADD, false);
         UpdateFlag(SharpFlags::HALF, false);
@@ -172,14 +177,51 @@ namespace GBcc {
 
     void Sharp::OrAccumulator(const u8 value)
     {
-        const u8 currentAccumulator = m_A.GetValue();
-        currentAccumulator |= value;
+        const u8 currentAccumulator = m_A.GetValue() | value;
 
-        bool isZero = currentAccumulator == 0U; 
+        const bool isZero = currentAccumulator == 0U; 
         UpdateFlag(SharpFlags::ZERO, isZero);
         UpdateFlag(SharpFlags::NOT_ADD, false);
         UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, false);
+
+        m_A.SetValue(currentAccumulator);
+    }
+
+    void Sharp::DecimalAdjustAccumulator()
+    {
+        u8 adjustment = 0U;
+        u8 currentAccumulator = m_A.GetValue();
+        if (FlagIsSet(SharpFlags::NOT_ADD))
+        {
+            adjustment += FlagIsSet(SharpFlags::HALF)  ? 0x06U : 0U;
+            adjustment += FlagIsSet(SharpFlags::CARRY) ? 0x60U : 0U;
+            const bool shouldSetCarry = adjustment > currentAccumulator;
+            UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+            currentAccumulator -= adjustment;
+        }
+        else
+        {
+            if (
+                FlagIsSet(SharpFlags::HALF) 
+                || ((currentAccumulator & 0x0FU) > 0x09)
+            )
+            {
+                adjustment += 0x06U;
+            }
+
+            if (
+                FlagIsSet(SharpFlags::CARRY) 
+                || (currentAccumulator > 0x9F)
+            )
+            {
+                adjustment += 0x60U;
+            }
+
+            const u16 result16 = currentAccumulator + adjustment;
+            const bool shouldSetCarry = TestBit(result16, 8U);
+            currentAccumulator += adjustment;
+        }
 
         m_A.SetValue(currentAccumulator);
     }
@@ -230,12 +272,12 @@ namespace GBcc {
 
     void Sharp::LoadWordToRegister(ByteRegister& destination)
     {
-        const u8 value = m_Operand & GB_LOW_BYTE;
+        const u8 value = m_Operand.as8;
         destination.SetValue(value);
     }
 
     void Sharp::LoadWordFromAddress(
-        SharpRegister const* addressSourceRegister,
+        SharpRegister* const addressSourceRegister,
         ByteRegister& destination,
         const PointerOperation ptrOp
     )
@@ -258,7 +300,7 @@ namespace GBcc {
         }
         else
         {
-            address = m_Operand;
+            address = m_Operand.as16;
         }
 
         const u8 val = m_pMemBus->ReadWord(address);
@@ -267,7 +309,7 @@ namespace GBcc {
     }
 
     void Sharp::StoreWordToMemory(
-        SharpRegister const* addressDestinationRegister,
+        SharpRegister* const addressDestinationRegister,
         const ByteRegister& source, 
         const PointerOperation ptrOp
     )
@@ -290,7 +332,7 @@ namespace GBcc {
         }
         else
         {
-            address = m_Operand;
+            address = m_Operand.as16;
         }
 
         const u8 val = source.GetValue();
@@ -299,7 +341,7 @@ namespace GBcc {
 
     void Sharp::LoadDoubleWordToRegister(SharpRegister& destination)
     {
-        destination.SetDoubleWord(m_Operand);
+        destination.SetDoubleWord(m_Operand.as16);
     }
 
     void Sharp::IncrementRegisterDoubleWord(SharpRegister& reg)
@@ -346,5 +388,159 @@ namespace GBcc {
         const u16 registerValue = m_pMemBus->ReadDoubleWord(m_SP);
         reg.SetDoubleWord(registerValue);
         m_SP += 2;
+    }
+
+    void Sharp::StoreSP_ToMemory()
+    {
+        m_pMemBus->WriteDoubleWord(m_Operand.as16, m_SP);
+    }
+
+    void Sharp::LoadHL_ToSP()
+    {
+        m_HL.SetDoubleWord(m_SP);
+    }
+
+    void Sharp::Call(const bool bConditionMet) 
+    {
+        if (!bConditionMet)
+            return;
+        
+        m_SP -= 2;
+        m_pMemBus->WriteDoubleWord(m_SP, m_PC);
+        m_PC = m_Operand.as16;
+
+        m_CyclesTaken += 12ULL;
+    }
+
+    void Sharp::Jump(const bool bConditionMet, const bool bAddressInHL)
+    {
+        if (!bConditionMet)
+            return;
+        m_PC = bAddressInHL ? m_HL.GetDoubleWord() : m_Operand.as16;
+        m_CyclesTaken += 4ULL;
+    }
+
+    void Sharp::JumpRelative(const bool bConditionMet)
+    {
+        if (!bConditionMet)
+            return;
+        const i8 offset = m_Operand.as8;
+        m_PC += offset;
+        m_CyclesTaken += 4ULL;
+    }
+
+    void Sharp::Return(const bool bConditionMet)
+    {
+        if (!bConditionMet)
+            return;
+        m_PC = m_pMemBus->ReadDoubleWord(m_SP);
+        m_SP += 2;
+        m_CyclesTaken += 12ULL;
+    }
+
+    void Sharp::AddSignedWordToSP()
+    {
+        const i8 offset = m_Operand.as8;
+
+        const u8 spLowNibble = m_SP & GB_LOW_NIBBLE;
+        const u8 offsetLowNibble = offset & GB_LOW_NIBBLE;
+
+        const u8 halfAdd = spLowNibble + offsetLowNibble;
+        const bool shouldSetHalfCarry = TestBit(halfAdd, 4U);
+        UpdateFlag(SharpFlags::HALF, shouldSetHalfCarry);
+
+        const u8 spLowWord = m_SP & GB_LOW_BYTE;
+        const u16 fullAdd = spLowWord + m_Operand.as8;
+        const bool shouldSetCarry = TestBit(fullAdd, 8U);
+        
+        UpdateFlag(SharpFlags::ZERO, false);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+
+        m_SP += offset;
+    }
+
+    void Sharp::LoadToHL_SP_WithOffset()
+    {
+        AddSignedWordToSP();
+        m_HL.SetDoubleWord(m_SP);
+    }
+
+    void Sharp::ResetToVector(const u16 resetVector)
+    {
+        m_SP -= 2U;
+        m_pMemBus->WriteDoubleWord(m_SP, m_PC);
+        m_PC = resetVector;
+    }
+
+    u8 Sharp::ShiftLeftArithmetic(const u8 value)
+    {
+        const bool shouldSetCarry = TestBit(value, 7U);
+        const u8 newValue = value << 1U;
+        
+        const bool shouldSetZero = newValue == 0U;
+
+        UpdateFlag(SharpFlags::ZERO, shouldSetZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
+        UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+    }
+
+    u8 Sharp::ShiftRightArithmetic(const u8 value)
+    {
+        const bool shouldSetCarry = TestBit(value, 0U);
+        const u8 signBitMask = value & 0x80U;
+        const u8 newValue = (value >> 1U) | signBitMask;
+
+        const bool shouldSetZero = newValue == 0U;
+
+        UpdateFlag(SharpFlags::ZERO, shouldSetZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
+        UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+    }
+
+    u8 Sharp::ShiftRightLogical(const u8 value)
+    {
+        const bool shouldSetCarry = TestBit(value, 0U);
+        const u8 newValue = value >> 1U;
+        
+        const bool shouldSetZero = newValue == 0U;
+
+        UpdateFlag(SharpFlags::ZERO, shouldSetZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
+        UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+    }
+
+    u8 Sharp::SwapNibbles(const u8 value)
+    {
+        const u8 newHighNibble = (value & 0x0'FU) << 4U;
+        const u8 newLowNibble  = (value & 0xF'0U) >> 4U;
+
+        return newHighNibble | newLowNibble;
+    }
+
+    void Sharp::BitInstruction(const u8 index, const u8 value)
+    {
+        bool shouldSetZero = !TestBit(value, index);
+        UpdateFlag(SharpFlags::ZERO, shouldSetZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, true);
+    }
+
+    u8 Sharp::ResetBit(const u8 index, const u8 value)
+    {
+        const u8 bitMask = ~(0x1U << index);
+        const u8 newValue = value & bitMask;
+
+        return newValue;
+    }
+
+    u8 Sharp::SetBit(const u8 index, const u8 value)
+    {
+        const u8 bitMask = 0x1U << index;
+        const u8 newValue = value | bitMask;
+
+        return newValue;
     }
 }

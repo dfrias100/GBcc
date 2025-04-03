@@ -64,9 +64,15 @@ namespace GBcc
         u16 m_SP = 0ULL;
         u16 m_PC = 0ULL;
 
-        u16 m_Operand;
+        union
+        {
+            u16 as16;
+            u8  as8;
+        } m_Operand;
 
         Memory* const m_pMemBus;
+
+        u64 m_CyclesTaken = 0ULL;
 
         u8  FetchWord();
         u16 FetchDoubleWord();
@@ -88,18 +94,19 @@ namespace GBcc
         void AndAccumulator(const u8 value);
         void OrAccumulator(const u8 value);
         void XorAccumulator(const u8 value);
+        void DecimalAdjustAccumulator();
         void DecrementRegisterWord(ByteRegister& reg);
         void IncrementRegisterWord(ByteRegister& reg);
         void IncrementWordAtHL();
         void AddRegisterWordToAccumulator(const ByteRegister& source);
         void LoadWordToRegister(ByteRegister& destination);
         void LoadWordFromAddress(
-            SharpRegister const* addressSourceRegister,
+            SharpRegister* const addressSourceRegister,
             ByteRegister& destination, 
             const PointerOperation ptrOp
         );
         void StoreWordToMemory(
-            SharpRegister const* addressDestinationRegister,
+            SharpRegister* const addressDestinationRegister,
             const ByteRegister& source, 
             const PointerOperation ptrOp
         );
@@ -110,6 +117,27 @@ namespace GBcc
         u16  UnsignedAddDoubleWord(const u16 lhs, const u16 rhs);
         void PushRegisters(const SharpRegister& reg);
         void PopRegisters(SharpRegister& reg);
+        void StoreSP_ToMemory();
+        void LoadHL_ToSP();
+
+        void Call(const bool bConditionMet);
+        void Jump(const bool bConditionMet, const bool bAddressInHL);
+        void JumpRelative(const bool bConditionMet);
+        void Return(const bool bConditionMet);
+
+        void AddSignedWordToSP();
+        void LoadToHL_SP_WithOffset();
+
+        void ResetToVector(const u16 resetVector);
+
+        u8 ShiftLeftArithmetic(const u8 value);
+        u8 ShiftRightArithmetic(const u8 value);
+        u8 ShiftRightLogical(const u8 value);
+
+        u8 SwapNibbles(const u8 value);
+        void BitInstruction(const u8 index, const u8 value);
+        u8 ResetBit(const u8 index, const u8 value);
+        u8 SetBit(const u8 index, const u8 value);
         
         public:
         Sharp(Memory* const pMemBus);
