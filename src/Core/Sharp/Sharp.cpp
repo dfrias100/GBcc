@@ -19,6 +19,8 @@
 #include "Core/Memory.hpp"
 #include "Core/Bitmasks.hpp"
 
+#include "Utility.hpp"
+
 #include <iostream>
 
 namespace GBcc {
@@ -29,6 +31,75 @@ namespace GBcc {
         m_HL(m_H, m_L),
         m_pMemBus(pMemBus)
     {}
+
+    void Sharp::FetchWord()
+    {
+        m_Operand.as8 = m_pMemBus->ReadWord(m_PC++);
+    }
+
+    void Sharp::FetchDoubleWord()
+    {
+        m_Operand.as16 = m_pMemBus->ReadDoubleWord(m_PC);
+        m_PC += 2;
+    }
+
+    void Sharp::FetchHL() 
+    {
+        const u16 address = m_HL.GetDoubleWord();
+        const u8 fetchedVal = m_pMemBus->ReadWord(address);
+        m_HL_Memory.SetValue(fetchedVal);
+    }
+
+    void Sharp::WriteHL() 
+    {
+        const u16 address = m_HL.GetDoubleWord();
+        const u8 valToWrite = m_HL_Memory.GetValue();
+        m_pMemBus->WriteWord(address, valToWrite);
+    }
+
+    ByteRegister& Sharp::GetRegisterFromIndex(const u8 index)
+    {
+        switch (index)
+        {
+            case 0:
+                return m_B;
+            case 1:
+                return m_C;
+            case 2:
+                return m_D;
+            case 3:
+                return m_E;
+            case 4:
+                return m_H;
+            case 5:
+                return m_L;
+            case 6:
+                return m_HL_Memory;
+            case 7:
+                return m_A;
+            default:
+                std::cerr << "Invalid register index specified, cannot return any register! Index supplied: " << index << std::endl;
+                exit(-1);
+        }
+    }
+
+    SharpRegister& Sharp::GetRegisterPairFromIndex(const u8 index)
+    {
+        switch (index)
+        {
+            case 0:
+                return m_BC;
+            case 1:
+                return m_DE;
+            case 2:
+                return m_HL;
+            case 3:
+                return m_AF;
+            default:
+                std::cerr << "Invalid register index specified, cannot return any register! Index supplied: " << index << std::endl;
+                exit(-1);
+        }
+    }
 
     template <typename T>
     bool Sharp::TestBit(const T val, const size_t bitIndex) const
@@ -250,19 +321,6 @@ namespace GBcc {
         UpdateFlag(SharpFlags::CARRY, bCurrentCarry); 
     }
 
-    void Sharp::IncrementWordAtHL()
-    {
-        const bool bCurrentCarry = FlagIsSet(SharpFlags::CARRY);
-
-        const u16 address = m_HL.GetDoubleWord();
-        const u8 currentValue = m_pMemBus->ReadWord(address);
-        const u8 incrementedValue = UnsignedAddWord(currentValue, 1U);
-
-        m_pMemBus->WriteWord(address, incrementedValue);
-
-        UpdateFlag(SharpFlags::CARRY, bCurrentCarry);
-    }
-
     void Sharp::AddRegisterWordToAccumulator(const ByteRegister& source)
     {
         const u8 operand = source.GetValue();
@@ -305,7 +363,6 @@ namespace GBcc {
 
         const u8 val = m_pMemBus->ReadWord(address);
         destination.SetValue(val);
-
     }
 
     void Sharp::StoreWordToMemory(
@@ -483,6 +540,8 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, false);
         UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+
+        return newValue;
     }
 
     u8 Sharp::ShiftRightArithmetic(const u8 value)
@@ -497,6 +556,8 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, false);
         UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+
+        return newValue;
     }
 
     u8 Sharp::ShiftRightLogical(const u8 value)
@@ -510,6 +571,8 @@ namespace GBcc {
         UpdateFlag(SharpFlags::NOT_ADD, false);
         UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+
+        return newValue;
     }
 
     u8 Sharp::SwapNibbles(const u8 value)
@@ -542,5 +605,55 @@ namespace GBcc {
         const u8 newValue = value | bitMask;
 
         return newValue;
+    }
+
+    void Sharp::ExecuteOpcode(const u8 opcode)
+    {
+        const u8 xIndex = GetValueFromMask(opcode, GB_X_INDEX_MASK);
+        switch (xIndex)
+        {
+            case 0:
+                DecodeX_Zero(opcode);
+            case 1:
+                Load8Bit(opcode);
+            case 2:
+                ArithmeticLogicUnit(opcode);
+            case 3:
+                DecodeX_Three(opcode);
+        }
+    }
+
+    void Sharp::DecodeX_Zero(const u8 opcode)
+    {
+        const u8 zIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
+
+        switch (zIndex)
+        {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            default:
+                return;
+        }
+    }
+
+    void Sharp::Load8Bit(const u8 opcode)
+    {
+
+    }
+
+    void Sharp::ArithmeticLogicUnit(const u8 opcode)
+    {
+
+    }
+
+    void Sharp::DecodeX_Three(const u8 opcode)
+    {
+
     }
 }

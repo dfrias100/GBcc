@@ -56,6 +56,8 @@ namespace GBcc
         ByteRegister m_H;
         ByteRegister m_L;
 
+        ByteRegister m_HL_Memory;
+
         SharpRegister m_AF;
         SharpRegister m_BC;
         SharpRegister m_DE;
@@ -74,8 +76,14 @@ namespace GBcc
 
         u64 m_CyclesTaken = 0ULL;
 
-        u8  FetchWord();
-        u16 FetchDoubleWord();
+        void FetchWord();
+        void FetchDoubleWord();
+
+        void FetchHL();
+        void WriteHL();
+
+        ByteRegister& GetRegisterFromIndex(const u8 index);
+        SharpRegister& GetRegisterPairFromIndex(const u8 index);
 
         template <typename T>
         bool TestBit(const T val, size_t bitIndex) const;
@@ -97,7 +105,6 @@ namespace GBcc
         void DecimalAdjustAccumulator();
         void DecrementRegisterWord(ByteRegister& reg);
         void IncrementRegisterWord(ByteRegister& reg);
-        void IncrementWordAtHL();
         void AddRegisterWordToAccumulator(const ByteRegister& source);
         void LoadWordToRegister(ByteRegister& destination);
         void LoadWordFromAddress(
@@ -138,10 +145,17 @@ namespace GBcc
         void BitInstruction(const u8 index, const u8 value);
         u8 ResetBit(const u8 index, const u8 value);
         u8 SetBit(const u8 index, const u8 value);
+
+        void ExecuteOpcode(const u8 opcode);
+
+        void DecodeX_Zero(const u8 opcode);
+        void Load8Bit(const u8 opcode);
+        void ArithmeticLogicUnit(const u8 opcode);
+        void DecodeX_Three(const u8 opcode);
         
         public:
         Sharp(Memory* const pMemBus);
 
-        u64 StepExecution();
+        u64 Step();
     };
 };

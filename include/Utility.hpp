@@ -16,16 +16,15 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Types.hpp"
+#include <cstdint>
+#include <bit>
 
 namespace GBcc
 {
-    constexpr size_t GB_BOOTROM_SIZE   = 256ULL;
-    constexpr size_t GB_BOOTROM_END    = GB_BOOTROM_SIZE - 1U;
-    constexpr u16    GB_CART_SPACE_END = 0x7FFFULL;
-    constexpr u8     GB_X_INDEX_MASK   = 0b11'00'00'00U;
-    constexpr u8     GB_Y_INDEX_MASK   = 0b00'11'10'00U;
-    constexpr u8     GB_P_INDEX_MASK   = 0b00'11'00'00U;
-    constexpr u8     GB_Q_INDEX_MASK   = 0b00'00'10'00U;
-    constexpr u8     GB_Z_INDEX_MASK   = 0b00'00'01'11U;
+    template <typename T>
+    constexpr T GetValueFromMask(const T value, const T bitmask)
+    {
+        size_t shiftAmount = std::countr_zero(bitmask);
+        return (value & bitmask) >> shiftAmount;
+    }
 }
