@@ -74,6 +74,8 @@ namespace GBcc
                 return m_SerialRegs[1];
             }
         }
+
+        return 0;
     }
 
     u16 Memory::ReadDoubleWord(const u16 address)

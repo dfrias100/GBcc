@@ -20,12 +20,36 @@
 
 namespace GBcc
 {
-    constexpr size_t GB_BOOTROM_SIZE   = 256ULL;
-    constexpr size_t GB_BOOTROM_END    = GB_BOOTROM_SIZE - 1U;
-    constexpr u16    GB_CART_SPACE_END = 0x7FFFULL;
-    constexpr u8     GB_X_INDEX_MASK   = 0b11'00'00'00U;
-    constexpr u8     GB_Y_INDEX_MASK   = 0b00'11'10'00U;
-    constexpr u8     GB_P_INDEX_MASK   = 0b00'11'00'00U;
-    constexpr u8     GB_Q_INDEX_MASK   = 0b00'00'10'00U;
-    constexpr u8     GB_Z_INDEX_MASK   = 0b00'00'01'11U;
+    constexpr size_t GB_BOOTROM_SIZE        = 256ULL;
+    constexpr size_t GB_BOOTROM_END         = GB_BOOTROM_SIZE - 1U;
+    constexpr u16    GB_CART_SPACE_END      = 0x7FFFULL;
+
+    constexpr u8     GB_CPU_DEREF_HL_PTR    = 6U;
+    constexpr u8     GB_CPU_REGISTER_SP     = 3U;
+
+    constexpr u8     GB_INSTR_BLOCK_MASK    = 0b11'00'00'00U;
+    constexpr u8     GB_INSTR_HALT_OPCODE   = 0b01'11'01'10U;
+    constexpr u8     GB_INSTR_NOP_OPCODE    = 0U;
+    constexpr u8     GB_INSTR_ADD_OPCODE    = 0U;
+    constexpr u8     GB_INSTR_ADC_OPCODE    = 1U;
+    constexpr u8     GB_INSTR_SUB_OPCODE    = 2U;
+    constexpr u8     GB_INSTR_SBC_OPCODE    = 3U;
+    constexpr u8     GB_INSTR_AND_OPCODE    = 4U;
+    constexpr u8     GB_INSTR_XOR_OPCODE    = 5U;
+    constexpr u8     GB_INSTR_OR_OPCODE     = 6U;
+    constexpr u8     GB_INSTR_CP_OPCODE     = 7U;
+
+    constexpr u8     GB_INSTR_BLOCK_REL_JMP     = 0U;
+    constexpr u8     GB_INSTR_BLOCK_LDD_IMM     = 1U;
+    constexpr u8     GB_INSTR_BLOCK_LDW_IND     = 2U;
+    constexpr u8     GB_INSTR_BLOCK_INC_DEC_DW  = 3U;
+    constexpr u8     GB_INSTR_BLOCK_INC_WRD     = 4U;
+    constexpr u8     GB_INSTR_BLOCK_DEC_WRD     = 5U;
+    constexpr u8     GB_INSTR_BLOCK_LDW_IMM     = 6U;
+    constexpr u8     GB_INSTR_BLOCK_ACC_MISC    = 7U;
+    
+    constexpr u8     GB_Y_INDEX_MASK        = 0b00'11'10'00U;
+    constexpr u8     GB_P_INDEX_MASK        = 0b00'11'00'00U;
+    constexpr u8     GB_Q_INDEX_MASK        = 0b00'00'10'00U;
+    constexpr u8     GB_Z_INDEX_MASK        = 0b00'00'01'11U;
 }

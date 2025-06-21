@@ -147,7 +147,7 @@ namespace GBcc {
 
     void Sharp::RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination)    
     {
-        auto val = source.GetValue();
+        const u8 val = source.GetValue();
         destination.SetValue(val);
     }
     
@@ -326,12 +326,6 @@ namespace GBcc {
         const u8 operand = source.GetValue();
         const u8 result = UnsignedAddWord(m_A.GetValue(), operand);
         m_A.SetValue(result);
-    }
-
-    void Sharp::LoadWordToRegister(ByteRegister& destination)
-    {
-        const u8 value = m_Operand.as8;
-        destination.SetValue(value);
     }
 
     void Sharp::LoadWordFromAddress(
@@ -609,51 +603,222 @@ namespace GBcc {
 
     void Sharp::ExecuteOpcode(const u8 opcode)
     {
-        const u8 xIndex = GetValueFromMask(opcode, GB_X_INDEX_MASK);
-        switch (xIndex)
+        const u8 blockNum = GetValueFromMask(opcode, GB_INSTR_BLOCK_MASK);
+        switch (blockNum)
         {
             case 0:
-                DecodeX_Zero(opcode);
+                DecodeBlock0(opcode);
             case 1:
-                Load8Bit(opcode);
+                DecodeBlock1(opcode);
             case 2:
-                ArithmeticLogicUnit(opcode);
+                DecodeBlock2(opcode);
             case 3:
-                DecodeX_Three(opcode);
+                DecodeBlock3(opcode);
         }
     }
 
-    void Sharp::DecodeX_Zero(const u8 opcode)
+    void Sharp::DecodeBlock0(const u8 opcode)
     {
+        if (opcode == GB_INSTR_NOP_OPCODE) [[unlikely]]
+        {
+            return;
+        }
+
         const u8 zIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
 
         switch (zIndex)
         {
-            case 0:
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-            case 7:
-            default:
-                return;
+            case GB_INSTR_BLOCK_REL_JMP:
+            break;
+            case GB_INSTR_BLOCK_LDD_IMM:
+            break;
+            case GB_INSTR_BLOCK_LDW_IND:
+            break;
+            case GB_INSTR_BLOCK_INC_DEC_DW:
+            break;
+            case GB_INSTR_BLOCK_INC_WRD:
+            case GB_INSTR_BLOCK_DEC_WRD:
+                HandleIncrementDecrement(opcode, zIndex & 1);
+            break;
+            case GB_INSTR_BLOCK_LDW_IMM:
+                LoadImmediateWord(opcode);
+            break;
+            case GB_INSTR_BLOCK_ACC_MISC:
+            break;
         }
     }
 
-    void Sharp::Load8Bit(const u8 opcode)
+    void Sharp::DecodeBlock1(const u8 opcode)
+    {
+        if (opcode == GB_INSTR_HALT_OPCODE) [[unlikely]]
+        {
+            // Halt not implemented right now
+            return;
+        }
+
+        // ============ 8-bit register-to-register loads and HL load/store ============
+
+        const u8 sourceRegisterIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
+        const u8 destinationRegisterIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
+
+        if (sourceRegisterIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            FetchHL();
+        }
+        
+        auto& sourceRegister = GetRegisterFromIndex(sourceRegisterIndex);
+        auto& destinationRegister = GetRegisterFromIndex(destinationRegisterIndex);
+
+        RegisterToRegisterWord(sourceRegister, destinationRegister);
+
+        if (destinationRegisterIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            WriteHL();
+        }
+    }
+
+    void Sharp::DecodeBlock2(const u8 opcode)
+    {
+        // 8-bit Arithmetic Logic Unit operations on Accumulator with Registers as Operands
+        const u8 registerOperandIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
+        const u8 aluOperation = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
+
+        if (registerOperandIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            FetchHL();
+        }
+
+        const auto& registerOperand = GetRegisterFromIndex(registerOperandIndex);
+        const u8 currentAccumulatorValue = m_A.GetValue();
+        const u8 operandValue = registerOperand.GetValue();
+
+        u8 newAccumulatorValue = 0;
+
+        switch (aluOperation)
+        {
+            case GB_INSTR_ADD_OPCODE:
+            case GB_INSTR_ADC_OPCODE:
+                newAccumulatorValue = UnsignedAddWord(
+                    currentAccumulatorValue, 
+                    operandValue, 
+                    aluOperation & 0b1
+                );
+                m_A.SetValue(newAccumulatorValue);
+                break;
+            case GB_INSTR_SUB_OPCODE:
+            case GB_INSTR_SBC_OPCODE:
+                newAccumulatorValue = UnsignedSubtractWord(
+                    currentAccumulatorValue, 
+                    operandValue, 
+                    aluOperation & 0b1
+                );
+                m_A.SetValue(newAccumulatorValue);
+                break;
+            case GB_INSTR_AND_OPCODE:
+                AndAccumulator(operandValue);
+                break;
+            case GB_INSTR_XOR_OPCODE:
+                XorAccumulator(operandValue);
+                break;
+            case GB_INSTR_OR_OPCODE:
+                OrAccumulator(operandValue);
+                break;
+            case GB_INSTR_CP_OPCODE:
+                UnsignedSubtractWord(currentAccumulatorValue, operandValue, false);
+                break;
+        }
+    }
+
+    void Sharp::DecodeBlock3(const u8 opcode)
     {
 
     }
 
-    void Sharp::ArithmeticLogicUnit(const u8 opcode)
+    void Sharp::DecodePrefixCB(const u8 opcode)
     {
 
     }
 
-    void Sharp::DecodeX_Three(const u8 opcode)
+    void Sharp::HandleIncrementDecrement(const u8 opcode, const bool decrement)
     {
+        const u8 registerIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
 
+        if (registerIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            FetchHL();
+        }
+
+        auto& cpuRegister = GetRegisterFromIndex(registerIndex);
+
+        if (decrement)
+        {
+            DecrementRegisterWord(cpuRegister);
+        } 
+        else
+        {
+            IncrementRegisterWord(cpuRegister);
+        }
+
+        if (registerIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            WriteHL();
+        }
+    }
+
+    void Sharp::HandleLoadDouble(const u8 opcode)
+    {
+        const u8 qIndex = GetValueFromMask(opcode, GB_Q_INDEX_MASK);
+        const u8 registerPairIndex = GetValueFromMask(opcode, GB_P_INDEX_MASK);
+
+        if (qIndex == 0)
+        {
+            FetchDoubleWord();
+
+            if (registerPairIndex == GB_CPU_REGISTER_SP)
+            {
+                m_SP = m_Operand.as16;
+                return;
+            }
+
+            auto& registerPair = GetRegisterPairFromIndex(registerPairIndex);
+            registerPair.SetDoubleWord(m_Operand.as16);
+        }
+        else
+        {
+            const u16 currentHL = m_HL.GetDoubleWord();
+
+            if (registerPairIndex == GB_CPU_REGISTER_SP)
+            {
+                m_Operand.as16 = m_SP;
+            }
+            else
+            {
+                auto& registerPair = GetRegisterPairFromIndex(registerPairIndex);
+                m_Operand.as16 = registerPair.GetDoubleWord();
+            }
+
+            const u16 result = UnsignedAddDoubleWord(currentHL, m_Operand.as16);
+            m_HL.SetDoubleWord(result);
+        }
+    }
+
+
+    void Sharp::LoadImmediateWord(const u8 opcode)
+    {
+        FetchWord();
+        const u8 registerIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
+
+        if (registerIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            FetchHL();
+        }
+
+        auto& destinationRegister = GetRegisterFromIndex(registerIndex);
+        destinationRegister.SetValue(m_Operand.as8);
+    }
+
+    u64 Sharp::Step()
+    {
+        return 0;
     }
 }

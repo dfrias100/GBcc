@@ -106,7 +106,6 @@ namespace GBcc
         void DecrementRegisterWord(ByteRegister& reg);
         void IncrementRegisterWord(ByteRegister& reg);
         void AddRegisterWordToAccumulator(const ByteRegister& source);
-        void LoadWordToRegister(ByteRegister& destination);
         void LoadWordFromAddress(
             SharpRegister* const addressSourceRegister,
             ByteRegister& destination, 
@@ -148,10 +147,15 @@ namespace GBcc
 
         void ExecuteOpcode(const u8 opcode);
 
-        void DecodeX_Zero(const u8 opcode);
-        void Load8Bit(const u8 opcode);
-        void ArithmeticLogicUnit(const u8 opcode);
-        void DecodeX_Three(const u8 opcode);
+        void DecodeBlock0(const u8 opcode);
+        void DecodeBlock1(const u8 opcode);
+        void DecodeBlock2(const u8 opcode);
+        void DecodeBlock3(const u8 opcode);
+        void DecodePrefixCB(const u8 opcode);
+
+        void HandleIncrementDecrement(const u8 opcode, const bool increment);
+        void HandleLoadDouble(const u8 opcode);
+        void LoadImmediateWord(const u8 opcode);
         
         public:
         Sharp(Memory* const pMemBus);
