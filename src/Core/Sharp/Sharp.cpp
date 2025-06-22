@@ -145,6 +145,23 @@ namespace GBcc {
         return m_F.BitIsSet(static_cast<size_t>(flag));
     }
 
+    inline bool Sharp::EvaluateCondition(const i8 conditionCode)
+    {
+        if (conditionCode < -1) return true;
+
+        switch (conditionCode)
+        {
+            case GB_CPU_CONDITION_NZ:
+                return !FlagIsSet(SharpFlags::ZERO);
+            case GB_CPU_CONDITION_Z:
+                return FlagIsSet(SharpFlags::ZERO);
+            case GB_CPU_CONDITION_NC:
+                return !FlagIsSet(SharpFlags::CARRY);
+            case GB_CPU_CONDITION_C:
+                return FlagIsSet(SharpFlags::CARRY);
+        }
+    }
+
     void Sharp::RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination)    
     {
         const u8 val = source.GetValue();
@@ -274,18 +291,16 @@ namespace GBcc {
         else
         {
             if (
-                FlagIsSet(SharpFlags::HALF) 
-                || ((currentAccumulator & 0x0FU) > 0x09)
-            )
-            {
+                FlagIsSet(SharpFlags::HALF) || 
+                ((currentAccumulator & 0x0FU) > 0x09)
+            ) {
                 adjustment += 0x06U;
             }
 
             if (
                 FlagIsSet(SharpFlags::CARRY) 
                 || (currentAccumulator > 0x9F)
-            )
-            {
+            ) {
                 adjustment += 0x60U;
             }
 
@@ -332,8 +347,7 @@ namespace GBcc {
         SharpRegister* const addressSourceRegister,
         ByteRegister& destination,
         const PointerOperation ptrOp
-    )
-    {
+    ) {
         u16 address;
         if (addressSourceRegister != nullptr)
         {
@@ -359,12 +373,11 @@ namespace GBcc {
         destination.SetValue(val);
     }
 
-    void Sharp::StoreWordToMemory(
+    void Sharp::StoreWordToMemory (
         SharpRegister* const addressDestinationRegister,
         const ByteRegister& source, 
         const PointerOperation ptrOp
-    )
-    {
+    ) {
         u16 address;
         if (addressDestinationRegister != nullptr)
         {;
@@ -629,22 +642,23 @@ namespace GBcc {
         switch (zIndex)
         {
             case GB_INSTR_BLOCK_REL_JMP:
-            break;
+                HandleRelJumpMisc(opcode);
+                break;
             case GB_INSTR_BLOCK_LDD_IMM:
-            break;
+                HandleLoadDouble(opcode);
+                break;
             case GB_INSTR_BLOCK_LDW_IND:
-            break;
+                break;
             case GB_INSTR_BLOCK_INC_DEC_DW:
-            break;
             case GB_INSTR_BLOCK_INC_WRD:
             case GB_INSTR_BLOCK_DEC_WRD:
-                HandleIncrementDecrement(opcode, zIndex & 1);
-            break;
+                HandleIncrementDecrement(opcode, zIndex);
+                break;
             case GB_INSTR_BLOCK_LDW_IMM:
                 LoadImmediateWord(opcode);
-            break;
+                break;
             case GB_INSTR_BLOCK_ACC_MISC:
-            break;
+                break;
         }
     }
 
@@ -741,7 +755,22 @@ namespace GBcc {
 
     void Sharp::HandleRelJumpMisc(const u8 opcode)
     {
-        
+        const u8 yIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
+
+        if (yIndex == GB_INSTR_STR_SP_IMM_PTR)
+        {
+            FetchDoubleWord();
+            m_pMemBus->WriteDoubleWord(m_Operand.as16, m_SP);
+        }
+        else if (
+            (yIndex >= GB_INSTR_JMP_REL_MIN) && 
+            (yIndex <= GB_INSTR_JMP_REL_MAX)
+        ) {
+            FetchWord();
+            const i8 conditionCode = (i8) yIndex - 1;
+            const bool bConditionMet = EvaluateCondition(conditionCode);
+            JumpRelative(bConditionMet);
+        }
     }
 
     void Sharp::HandleIncrementDecrement(const u8 opcode, const u8 zIndex)

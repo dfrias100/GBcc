@@ -93,6 +93,8 @@ namespace GBcc
         inline void UpdateFlag(const SharpFlags& flag, const bool set);
         inline void ComplementCarry();
         inline bool FlagIsSet(const SharpFlags& flag);
+        
+        inline bool EvaluateCondition(const i8 conditionCode);
 
         void RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination);
         u8   UnsignedAddWord(const u8 lhs, const u8 rhs, const bool shouldAddCarry = false);
