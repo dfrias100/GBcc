@@ -153,7 +153,8 @@ namespace GBcc
         void DecodeBlock3(const u8 opcode);
         void DecodePrefixCB(const u8 opcode);
 
-        void HandleIncrementDecrement(const u8 opcode, const bool increment);
+        void HandleRelJumpMisc(const u8 opcode);
+        void HandleIncrementDecrement(const u8 opcode, const u8 zIndex);
         void HandleLoadDouble(const u8 opcode);
         void LoadImmediateWord(const u8 opcode);
         

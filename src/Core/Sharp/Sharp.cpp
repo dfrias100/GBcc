@@ -739,29 +739,60 @@ namespace GBcc {
 
     }
 
-    void Sharp::HandleIncrementDecrement(const u8 opcode, const bool decrement)
+    void Sharp::HandleRelJumpMisc(const u8 opcode)
     {
-        const u8 registerIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
+        
+    }
 
-        if (registerIndex == GB_CPU_DEREF_HL_PTR)
+    void Sharp::HandleIncrementDecrement(const u8 opcode, const u8 zIndex)
+    {
+        if (zIndex == GB_INSTR_BLOCK_INC_DEC_DW)
         {
-            FetchHL();
+            const bool decrement = GetValueFromMask(opcode, GB_Q_INDEX_MASK);
+            const u8 registerIndex = GetValueFromMask(opcode, GB_P_INDEX_MASK);
+
+            if (registerIndex == GB_CPU_REGISTER_SP)
+            {
+                m_SP += decrement ? -1 : 1;
+                return;
+            }
+
+            auto& registerPair = GetRegisterPairFromIndex(registerIndex);
+
+            if (decrement)
+            {
+                DecrementRegisterDoubleWord(registerPair);
+            }
+            else 
+            {
+                IncrementRegisterDoubleWord(registerPair);
+            }
         }
-
-        auto& cpuRegister = GetRegisterFromIndex(registerIndex);
-
-        if (decrement)
+        else 
         {
-            DecrementRegisterWord(cpuRegister);
-        } 
-        else
-        {
-            IncrementRegisterWord(cpuRegister);
-        }
+            const u8 registerIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
 
-        if (registerIndex == GB_CPU_DEREF_HL_PTR)
-        {
-            WriteHL();
+            if (registerIndex == GB_CPU_DEREF_HL_PTR)
+            {
+                FetchHL();
+            }
+
+            auto& cpuRegister = GetRegisterFromIndex(registerIndex);
+            const bool decrement = zIndex & 1;
+
+            if (decrement)
+            {
+                DecrementRegisterWord(cpuRegister);
+            } 
+            else
+            {
+                IncrementRegisterWord(cpuRegister);
+            }
+
+            if (registerIndex == GB_CPU_DEREF_HL_PTR)
+            {
+                WriteHL();
+            }
         }
     }
 
@@ -801,7 +832,6 @@ namespace GBcc {
             m_HL.SetDoubleWord(result);
         }
     }
-
 
     void Sharp::LoadImmediateWord(const u8 opcode)
     {
