@@ -767,6 +767,7 @@ namespace GBcc {
     void Sharp::DecodePrefixCB(const u8 opcode)
     {
         const u8 registerSourceIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
+        const u8 xIndex = GetValueFromMask(opcode, GB_INSTR_BLOCK_MASK);
 
         if (registerSourceIndex == GB_CPU_DEREF_HL_PTR)
         {
@@ -776,7 +777,7 @@ namespace GBcc {
         auto& registerSource = GetRegisterFromIndex(registerSourceIndex);
         const u8 bitIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
 
-        switch (registerSourceIndex)
+        switch (xIndex)
         {
             case 0:
                 RotateShiftHelper(registerSource, bitIndex);

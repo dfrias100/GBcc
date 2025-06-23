@@ -61,6 +61,11 @@ namespace GBcc
         {
             return m_Rom[address];
         }
+        else if (address >= 0x8000U && address <= 0x9FFFU)
+        {
+            trueAddress = address - 0x8000U;
+            return m_VideoRam[trueAddress];
+        }
         else if (address >= 0xC000U && address <= 0xDFFFU)
         {
             trueAddress = address - 0xC000U;
@@ -97,7 +102,12 @@ namespace GBcc
     void Memory::WriteWord(const u16 address, const u8 data)
     {
         u16 trueAddress;
-        if (address >= 0xC000U && address <= 0xDFFFU)
+        if (address >= 0x8000U && address <= 0x9FFFU)
+        {
+            trueAddress = address - 0x8000U;
+            m_VideoRam[trueAddress] = data;
+        } 
+        else if (address >= 0xC000U && address <= 0xDFFFU)
         {
             trueAddress = address - 0xC000U;
             m_WorkRam[trueAddress] = data;
