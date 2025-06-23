@@ -159,8 +159,9 @@ namespace GBcc
         void HandleIncrementDecrement(const u8 opcode, const u8 zIndex);
         void HandleLoadStoreIndirect(const u8 opcode);
         void HandleLoadDouble(const u8 opcode);
-        void LoadImmediateWord(const u8 opcode);
         void HandleMiscAccumulator(const u8 opcode);
+        void LoadImmediateWord(const u8 opcode);
+        void RotateShiftHelper(ByteRegister& workingRegister, const u8 operation);
         
         public:
         Sharp(Memory* const pMemBus);

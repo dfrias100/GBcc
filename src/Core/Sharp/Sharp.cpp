@@ -619,6 +619,13 @@ namespace GBcc {
 
     void Sharp::ExecuteOpcode(const u8 opcode)
     {
+        if (opcode == GB_INSTR_PREFIX_CB)
+        {
+            FetchWord();
+            DecodePrefixCB(m_Operand.as8);
+            return;
+        }
+
         const u8 blockNum = GetValueFromMask(opcode, GB_INSTR_BLOCK_MASK);
         switch (blockNum)
         {
@@ -759,7 +766,40 @@ namespace GBcc {
 
     void Sharp::DecodePrefixCB(const u8 opcode)
     {
+        const u8 registerSourceIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
 
+        if (registerSourceIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            FetchHL();
+        }
+
+        auto& registerSource = GetRegisterFromIndex(registerSourceIndex);
+        const u8 bitIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
+
+        switch (registerSourceIndex)
+        {
+            case 0:
+                RotateShiftHelper(registerSource, bitIndex);
+                break;
+            case 1:
+                BitInstruction(bitIndex, registerSource.GetValue());
+                return;
+            case 2:
+                registerSource.SetValue(
+                    ResetBit(bitIndex, registerSource.GetValue())
+                );
+                break;
+            case 3:
+                registerSource.SetValue(
+                    SetBit(bitIndex, registerSource.GetValue())
+                );
+                break;
+        }
+
+        if (registerSourceIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            WriteHL();
+        }
     }
 
     void Sharp::HandleRelJumpMisc(const u8 opcode)
@@ -960,6 +1000,53 @@ namespace GBcc {
                 break;
             case 7:
                 ResetFlag(SharpFlags::CARRY);
+                break;
+        }
+    }
+
+    void Sharp::RotateShiftHelper(ByteRegister& workingRegister, const u8 operation)
+    {
+        switch (operation)
+        {
+            case 0:
+                workingRegister.SetValue(
+                    RotateLeft(workingRegister.GetValue(), true)
+                );
+                break;
+            case 1:
+                workingRegister.SetValue(
+                    RotateRight(workingRegister.GetValue(), true)
+                );
+                break;
+            case 2:
+                workingRegister.SetValue(
+                    RotateLeft(workingRegister.GetValue(), false)
+                );
+                break;
+            case 3:
+                workingRegister.SetValue(
+                    RotateRight(workingRegister.GetValue(), false)
+                );
+                break;
+            case 4:
+                workingRegister.SetValue(
+                    ShiftLeftArithmetic(workingRegister.GetValue())
+                );
+                break;
+            case 5:
+                workingRegister.SetValue(
+                    ShiftRightArithmetic(workingRegister.GetValue())
+                );
+                break;
+            case 6:
+                workingRegister.SetValue(
+                    SwapNibbles(workingRegister.GetValue())
+                );
+                break;
+            case 7:
+                workingRegister.SetValue(
+                    ShiftRightLogical(workingRegister.GetValue())
+                );
                 break;
         }
     }
