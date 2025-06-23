@@ -26,10 +26,10 @@ namespace GBcc
 
     constexpr u8     GB_CPU_DEREF_HL_PTR    = 6U;
     constexpr u8     GB_CPU_REGISTER_SP     = 3U;
-    constexpr i8     GB_CPU_CONDITION_NZ    = 0U;
-    constexpr i8     GB_CPU_CONDITION_Z     = 1U;
-    constexpr i8     GB_CPU_CONDITION_NC    = 2U;
-    constexpr i8     GB_CPU_CONDITION_C     = 3U;
+    constexpr i8     GB_CPU_CONDITION_NZ    = 0;
+    constexpr i8     GB_CPU_CONDITION_Z     = 1;
+    constexpr i8     GB_CPU_CONDITION_NC    = 2;
+    constexpr i8     GB_CPU_CONDITION_C     = 3;
 
 
     constexpr u8     GB_INSTR_BLOCK_MASK        = 0b11'00'00'00U;

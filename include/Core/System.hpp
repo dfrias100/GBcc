@@ -16,28 +16,20 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 #pragma once
-#include "Core/System.hpp"
-#include "Video/Video.hpp"
-#include "Types.hpp"
 
-#include <chrono>
+#include "Core/Sharp/Sharp.hpp"
+#include "Core/Memory.hpp"
 
-namespace GBcc {
-    class Emulator
+namespace GBcc
+{
+    class System
     {
-        private:
-        Video& m_Video;
-        System m_System;
-        
-        std::chrono::steady_clock m_Timer;
-        std::chrono::time_point<std::chrono::steady_clock> m_StartFrame;
-
-        void LimitFramerate(const float fps);
-
+        Sharp m_CPU;
+        Memory m_Memory; 
         public:
-        Emulator();
-        ~Emulator();
-        
-        void Run();
+        System();
+        ~System() = default;
+
+        void Step();
     };
-}
+};

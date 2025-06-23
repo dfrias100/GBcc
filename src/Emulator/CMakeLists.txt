@@ -1,5 +1,5 @@
 add_library(Emulator Emulator.cpp)
-target_link_libraries(Emulator Video)
+target_link_libraries(Emulator Video System)
 target_include_directories(
     Emulator PRIVATE
     "../../include/"

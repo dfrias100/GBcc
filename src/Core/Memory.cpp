@@ -30,8 +30,16 @@ namespace GBcc
         std::ifstream testRomFile(testRomPath, std::ios::binary);
 
         testRomFile.read(
-            reinterpret_cast<char *>(m_BootRom.data()),
+            reinterpret_cast<char *>(m_Rom.data()),
             m_Rom.size()
+        );
+
+        std::string bootRomPath = "../roms/dmg_boot.bin";
+        std::ifstream bootRomFile(bootRomPath, std::ios::binary);
+
+        bootRomFile.read(
+            reinterpret_cast<char *>(m_BootRom.data()),
+            m_BootRom.size()
         );
     }
 

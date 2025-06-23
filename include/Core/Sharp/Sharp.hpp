@@ -157,8 +157,10 @@ namespace GBcc
 
         void HandleRelJumpMisc(const u8 opcode);
         void HandleIncrementDecrement(const u8 opcode, const u8 zIndex);
+        void HandleLoadStoreIndirect(const u8 opcode);
         void HandleLoadDouble(const u8 opcode);
         void LoadImmediateWord(const u8 opcode);
+        void HandleMiscAccumulator(const u8 opcode);
         
         public:
         Sharp(Memory* const pMemBus);

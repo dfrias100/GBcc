@@ -109,6 +109,7 @@ namespace GBcc {
         {
             m_StartFrame = m_Timer.now();
 
+            m_System.Step();
             DrawChecker(hScroll, vScroll);
             m_Video.UpdateTexture(framebuffer);
             m_Video.Draw();

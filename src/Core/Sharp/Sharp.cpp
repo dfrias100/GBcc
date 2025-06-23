@@ -159,6 +159,9 @@ namespace GBcc {
                 return !FlagIsSet(SharpFlags::CARRY);
             case GB_CPU_CONDITION_C:
                 return FlagIsSet(SharpFlags::CARRY);
+            default:
+                std::cerr << "Invalid condition code, cannot evaluate instruction condtion! Got: " << (i16) conditionCode << std::endl;
+                exit(1);
         }
     }
 
@@ -621,12 +624,16 @@ namespace GBcc {
         {
             case 0:
                 DecodeBlock0(opcode);
+                break;
             case 1:
                 DecodeBlock1(opcode);
+                break;
             case 2:
                 DecodeBlock2(opcode);
+                break;
             case 3:
                 DecodeBlock3(opcode);
+                break;
         }
     }
 
@@ -648,6 +655,7 @@ namespace GBcc {
                 HandleLoadDouble(opcode);
                 break;
             case GB_INSTR_BLOCK_LDW_IND:
+                HandleLoadStoreIndirect(opcode);
                 break;
             case GB_INSTR_BLOCK_INC_DEC_DW:
             case GB_INSTR_BLOCK_INC_WRD:
@@ -658,6 +666,7 @@ namespace GBcc {
                 LoadImmediateWord(opcode);
                 break;
             case GB_INSTR_BLOCK_ACC_MISC:
+                HandleMiscAccumulator(opcode);
                 break;
         }
     }
@@ -825,6 +834,44 @@ namespace GBcc {
         }
     }
 
+    void Sharp::HandleLoadStoreIndirect(const u8 opcode)
+    {
+        const u8 pIndex = GetValueFromMask(opcode, GB_P_INDEX_MASK);
+        const u8 qIndex = GetValueFromMask(opcode, GB_Q_INDEX_MASK);
+
+        PointerOperation ptrOp;
+        SharpRegister* pRegisterOperand;
+
+        switch (pIndex)
+        {
+            case 0:
+                ptrOp = PointerOperation::Nothing;
+                pRegisterOperand = &m_BC;
+                break;
+            case 1:
+                ptrOp = PointerOperation::Nothing;
+                pRegisterOperand = &m_DE;
+                break;
+            case 2:
+                ptrOp = PointerOperation::Increment;
+                pRegisterOperand = &m_HL;
+                break;
+            case 3:
+                ptrOp = PointerOperation::Decrement;
+                pRegisterOperand = &m_HL;
+                break;
+        }
+
+        if (qIndex == 0)
+        {
+            StoreWordToMemory(pRegisterOperand, m_A, ptrOp);
+        }
+        else
+        {
+            LoadWordFromAddress(pRegisterOperand, m_A, ptrOp);
+        }
+    }
+
     void Sharp::HandleLoadDouble(const u8 opcode)
     {
         const u8 qIndex = GetValueFromMask(opcode, GB_Q_INDEX_MASK);
@@ -876,8 +923,51 @@ namespace GBcc {
         destinationRegister.SetValue(m_Operand.as8);
     }
 
+    void Sharp::HandleMiscAccumulator(const u8 opcode) 
+    {
+        const u8 yIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
+
+        switch (yIndex)
+        {
+            case 0:
+                m_A.SetValue(
+                    RotateLeft(m_A.GetValue(), true)
+                );
+                break;
+            case 1:
+                m_A.SetValue(
+                    RotateRight(m_A.GetValue(), false)
+                );
+                break;
+            case 2:
+                m_A.SetValue(
+                    RotateLeft(m_A.GetValue(), true)
+                );
+                break;
+            case 3:
+                m_A.SetValue(
+                    RotateRight(m_A.GetValue(), false)
+                );
+                break;
+            case 4:
+                DecimalAdjustAccumulator();
+                break;
+            case 5:
+                m_A.SetValue(~m_A.GetValue());
+                break;
+            case 6:
+                SetFlag(SharpFlags::CARRY);
+                break;
+            case 7:
+                ResetFlag(SharpFlags::CARRY);
+                break;
+        }
+    }
+
     u64 Sharp::Step()
     {
+        const u8 opcode = m_pMemBus->ReadWord(m_PC++);
+        ExecuteOpcode(opcode);
         return 0;
     }
 }
