@@ -761,7 +761,27 @@ namespace GBcc {
 
     void Sharp::DecodeBlock3(const u8 opcode)
     {
+        const u8 zIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
 
+        switch (zIndex)
+        {
+            case GB_INSTR_CRET_MMLD_STACK:
+                break;
+            case GB_INSTR_POP_MISC:
+                break;
+            case GB_INSTR_COND_JUMP:
+                break;
+            case GB_INSTR_MISC_OPS:
+                break;
+            case GB_INSTR_COND_CALL:
+                break;
+            case GB_INSTR_PUSH_MISC:
+                break;
+            case GB_INSTR_ALU_IMM:
+                break;
+            case GB_INSTR_RESET:
+                break;
+        }
     }
 
     void Sharp::DecodePrefixCB(const u8 opcode)

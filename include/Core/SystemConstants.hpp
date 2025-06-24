@@ -56,6 +56,15 @@ namespace GBcc
     constexpr u8     GB_INSTR_BLOCK_LDW_IMM     = 6U;
     constexpr u8     GB_INSTR_BLOCK_ACC_MISC    = 7U;
 
+    constexpr u8     GB_INSTR_CRET_MMLD_STACK   = 0U;
+    constexpr u8     GB_INSTR_POP_MISC          = 1U;
+    constexpr u8     GB_INSTR_COND_JUMP         = 2U;
+    constexpr u8     GB_INSTR_MISC_OPS          = 3U;
+    constexpr u8     GB_INSTR_COND_CALL         = 4U;
+    constexpr u8     GB_INSTR_PUSH_MISC         = 5U;
+    constexpr u8     GB_INSTR_ALU_IMM           = 6U;
+    constexpr u8     GB_INSTR_RESET             = 7U;
+
     constexpr u8     GB_INSTR_BLOCK_STR_IMM_PTR = 1U;
     
     constexpr u8     GB_Y_INDEX_MASK        = 0b00'11'10'00U;
