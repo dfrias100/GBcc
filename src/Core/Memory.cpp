@@ -46,7 +46,7 @@ namespace GBcc
     u8 Memory::ReadWord(const u16 address)
     {
         u16 trueAddress;
-        if (address <= GB_BOOTROM_SIZE)
+        if (address < GB_BOOTROM_SIZE)
         {
             if (m_BootRomEnable)
             {

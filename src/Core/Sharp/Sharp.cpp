@@ -528,8 +528,12 @@ namespace GBcc {
 
     void Sharp::LoadToHL_SP_WithOffset()
     {
+        const u16 tempSP = m_SP;
+
         AddSignedWordToSP();
         m_HL.SetDoubleWord(m_SP);
+
+        m_SP = tempSP;
     }
 
     void Sharp::ResetToVector(const u16 resetVector)
@@ -762,16 +766,52 @@ namespace GBcc {
     void Sharp::DecodeBlock3(const u8 opcode)
     {
         const u8 zIndex = GetValueFromMask(opcode, GB_Z_INDEX_MASK);
+        const u8 yIndex = GetValueFromMask(opcode, GB_Y_INDEX_MASK);
 
         switch (zIndex)
         {
             case GB_INSTR_CRET_MMLD_STACK:
+            {
+                if (yIndex <= GB_CPU_MAX_COND_CODE)
+                {
+                    const bool bCondtionMet = EvaluateCondition(yIndex);
+                    Return(bCondtionMet);
+                }
+                else 
+                {
+                    HandleIOLoadAndStackALU(yIndex);
+                }
+            }
                 break;
             case GB_INSTR_POP_MISC:
+                HandlePopMisc(yIndex);
                 break;
             case GB_INSTR_COND_JUMP:
+                HandleAbsoluteJump(yIndex);
                 break;
             case GB_INSTR_MISC_OPS:
+                {
+                    if (yIndex == 0)
+                    {
+                        FetchWord();
+                        Jump(true, false);
+                    }
+                    else if (yIndex == 6)
+                    {
+                        // TODO: Disable interrupts
+                    }
+                    else if (yIndex == 7)
+                    {
+                        // TODO: Enable interrupts
+                    }
+                    else
+                    {
+                        std::cerr << "Invalid opcode! Got " 
+                            << std::showbase << std::hex << (u16) opcode << " @ PC = " 
+                            << std::showbase << std::hex << m_PC - 1U << ". Quitting." << std::endl;
+                        exit(-1);
+                    }
+                }
                 break;
             case GB_INSTR_COND_CALL:
                 break;
@@ -837,7 +877,7 @@ namespace GBcc {
             (yIndex <= GB_INSTR_JMP_REL_MAX)
         ) {
             FetchWord();
-            const i8 conditionCode = (i8) yIndex - 1;
+            const i8 conditionCode = (i8) yIndex - 4;
             const bool bConditionMet = EvaluateCondition(conditionCode);
             JumpRelative(bConditionMet);
         }
@@ -1022,6 +1062,96 @@ namespace GBcc {
             case 7:
                 ResetFlag(SharpFlags::CARRY);
                 break;
+        }
+    }
+    
+    void Sharp::HandleIOLoadAndStackALU(const u8 yIndex)
+    {
+        FetchWord();
+
+        switch (yIndex)
+        {
+            case 4:
+            {
+                m_Operand.as16 = 0xFF00U | m_Operand.as8;
+                StoreWordToMemory(nullptr, m_A);
+            }
+                break;
+            case 5:
+                AddSignedWordToSP();
+                break;
+            case 6:
+            {
+                m_Operand.as16 = 0xFF00U | m_Operand.as8;
+                LoadWordFromAddress(nullptr, m_A);
+            }
+                break;
+            case 7:
+                LoadToHL_SP_WithOffset();
+                break;
+        }
+    }
+
+    void Sharp::HandlePopMisc(const u8 yIndex)
+    {
+        const u8 qIndex = yIndex & 1U;
+        const u8 pIndex = GetValueFromMask(yIndex, (u8)0b110U);
+
+        if (qIndex == 0)
+        {
+            auto& registersToRestore = GetRegisterPairFromIndex(pIndex);
+            PopRegisters(registersToRestore);
+        }
+        else 
+        {
+            switch (pIndex)
+            {
+                case 1:
+                    // TODO: Interrupts
+                case 0:
+                    Return();
+                    break;
+                case 2:
+                    Jump(true, true);
+                    break;
+                case 3:
+                    m_SP = m_HL.GetDoubleWord();
+                    break;
+            }
+        }
+    }
+
+    void Sharp::HandleAbsoluteJump(const u8 yIndex)
+    {
+        if (yIndex <= GB_CPU_MAX_COND_CODE)
+        {
+            FetchDoubleWord();
+            const bool bConditionMet = EvaluateCondition(yIndex);
+            Jump(bConditionMet, false);
+        }
+        else
+        {
+            if ((~yIndex) & 1U)
+            {
+                m_Operand.as8 = m_C.GetValue();
+                m_Operand.as16 = 0xFF00U | (u16)m_Operand.as8;
+            }
+            else
+            {
+                FetchDoubleWord();
+            }
+
+            switch (yIndex)
+            {
+                case 4:
+                case 5:
+                    StoreWordToMemory(nullptr, m_A);
+                    break;
+                case 6:
+                case 7:
+                    LoadWordFromAddress(nullptr, m_A);
+                    break;
+            }
         }
     }
 

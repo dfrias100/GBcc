@@ -30,8 +30,9 @@ namespace GBcc
     constexpr i8     GB_CPU_CONDITION_Z     = 1;
     constexpr i8     GB_CPU_CONDITION_NC    = 2;
     constexpr i8     GB_CPU_CONDITION_C     = 3;
+    constexpr i8     GB_CPU_MAX_COND_CODE   = GB_CPU_CONDITION_C;
 
-    constexpr u8     GB_INSTR_PREFIX_CB     = 0xCBU;
+    constexpr u8     GB_INSTR_PREFIX_CB         = 0xCBU;
     constexpr u8     GB_INSTR_BLOCK_MASK        = 0b11'00'00'00U;
     constexpr u8     GB_INSTR_HALT_OPCODE       = 0b01'11'01'10U;
     constexpr u8     GB_INSTR_NOP_OPCODE        = 0U;

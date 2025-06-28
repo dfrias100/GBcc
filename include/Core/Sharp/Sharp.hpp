@@ -111,12 +111,12 @@ namespace GBcc
         void LoadWordFromAddress(
             SharpRegister* const addressSourceRegister,
             ByteRegister& destination, 
-            const PointerOperation ptrOp
+            const PointerOperation ptrOp = PointerOperation::Nothing
         );
         void StoreWordToMemory(
             SharpRegister* const addressDestinationRegister,
             const ByteRegister& source, 
-            const PointerOperation ptrOp
+            const PointerOperation ptrOp = PointerOperation::Nothing
         );
 
         void LoadDoubleWordToRegister(SharpRegister& destination);
@@ -131,7 +131,7 @@ namespace GBcc
         void Call(const bool bConditionMet);
         void Jump(const bool bConditionMet, const bool bAddressInHL);
         void JumpRelative(const bool bConditionMet);
-        void Return(const bool bConditionMet);
+        void Return(const bool bConditionMet = true);
 
         void AddSignedWordToSP();
         void LoadToHL_SP_WithOffset();
@@ -160,6 +160,9 @@ namespace GBcc
         void HandleLoadStoreIndirect(const u8 opcode);
         void HandleLoadDouble(const u8 opcode);
         void HandleMiscAccumulator(const u8 opcode);
+        void HandleIOLoadAndStackALU(const u8 yIndex);
+        void HandlePopMisc(const u8 yIndex);
+        void HandleAbsoluteJump(const u8 yIndex);
         void LoadImmediateWord(const u8 opcode);
         void RotateShiftHelper(ByteRegister& workingRegister, const u8 operation);
         
