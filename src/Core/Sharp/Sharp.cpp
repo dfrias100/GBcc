@@ -30,7 +30,46 @@ namespace GBcc {
         m_DE(m_D, m_E),
         m_HL(m_H, m_L),
         m_pMemBus(pMemBus)
-    {}
+    {
+        m_A.SetValue(0x01U);
+        SetFlag(SharpFlags::ZERO);
+        ResetFlag(SharpFlags::NOT_ADD);
+        SetFlag(SharpFlags::HALF);
+        SetFlag(SharpFlags::CARRY);
+
+        m_BC.SetDoubleWord(0x0013);
+        m_DE.SetDoubleWord(0x00D8);
+        m_HL.SetDoubleWord(0x014D);
+        m_PC = 0x0100;
+        m_SP = 0xFFFE;
+        m_ExecLog.open("execlog.txt");
+    }
+
+    void Sharp::DumpRegs()
+    {
+        std::array<u8, 4> memLog = { 0 };
+
+        for (size_t i = 0; i < 4; i++)
+            memLog[i] = m_pMemBus->ReadWord(m_PC + i);
+
+        if (m_ExecLog)
+        {
+            m_ExecLog << std::hex << std::uppercase << "A:"  << std::setw(2) << std::setfill('0') << (u16)m_A.GetValue() 
+											 << " F:"  << std::setw(2) << std::setfill('0') << (u16)m_F.GetValue() 
+											 << " B:"  << std::setw(2) << std::setfill('0') << (u16)m_B.GetValue() 
+											 << " C:"  << std::setw(2) << std::setfill('0') << (u16)m_C.GetValue() 
+											 << " D:"  << std::setw(2) << std::setfill('0') << (u16)m_D.GetValue() 
+											 << " E:"  << std::setw(2) << std::setfill('0') << (u16)m_E.GetValue() 
+											 << " H:"  << std::setw(2) << std::setfill('0') << (u16)m_H.GetValue() 
+											 << " L:"  << std::setw(2) << std::setfill('0') << (u16)m_L.GetValue() 
+											 << " SP:" << std::setw(4) << std::setfill('0') << m_SP
+										     << " PC:" << std::setw(4) << std::setfill('0') << m_PC << std::setw(2) << " PCMEM:" 
+													   << std::setw(2) << std::setfill('0') << (u16)memLog[0] << "," 
+													   << std::setw(2) << std::setfill('0') << (u16)memLog[1] << "," 
+													   << std::setw(2) << std::setfill('0') << (u16)memLog[2] << "," 
+													   << std::setw(2) << std::setfill('0') << (u16)memLog[3] << std::endl;
+        }
+    }
 
     void Sharp::FetchWord()
     {
@@ -147,7 +186,7 @@ namespace GBcc {
 
     inline bool Sharp::EvaluateCondition(const i8 conditionCode)
     {
-        if (conditionCode < -1) return true;
+        if (conditionCode < 0) return true;
 
         switch (conditionCode)
         {
@@ -196,12 +235,25 @@ namespace GBcc {
 
     u8 Sharp::UnsignedSubtractWord(const u8 lhs, const u8 rhs, const bool shouldBorrow)
     {
-        const u8 rhsNegative = ~rhs + (
+        const u8 rhsModified = rhs - (
             shouldBorrow ?
             static_cast<u8>(FlagIsSet(SharpFlags::CARRY)) :
-            1U
+            0U
         );
-        const u8 result = UnsignedAddWord(lhs, rhsNegative, false);
+        const u8 result = lhs - rhsModified;
+
+        u8 lhsLowNibble = lhs & GB_LOW_NIBBLE;
+        u8 rhsLowNibble = rhsModified & GB_LOW_NIBBLE;
+
+        bool shouldSetHalfCarry = lhsLowNibble < rhsLowNibble;
+        UpdateFlag(SharpFlags::HALF, shouldSetHalfCarry);
+
+        bool shouldSetCarry = lhs < rhsModified;
+        UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
+
+        bool isZero = result == 0;
+        UpdateFlag(SharpFlags::ZERO, isZero);
+
         UpdateFlag(SharpFlags::NOT_ADD, true);
 
         return result;
@@ -231,7 +283,9 @@ namespace GBcc {
         u8 newValue = value >> 1U;
         newValue |= (inBit << 7U);
 
-        UpdateFlag(SharpFlags::ZERO, false);
+        const bool isZero = newValue == 0; 
+
+        UpdateFlag(SharpFlags::ZERO, isZero);
         UpdateFlag(SharpFlags::NOT_ADD, false);
         UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, outBit);
@@ -312,6 +366,8 @@ namespace GBcc {
             currentAccumulator += adjustment;
         }
 
+        const bool isZero = currentAccumulator == 0;
+        UpdateFlag(SharpFlags::ZERO, isZero);
         m_A.SetValue(currentAccumulator);
     }
 
@@ -323,7 +379,7 @@ namespace GBcc {
         const u8 decrementedRegister = UnsignedSubtractWord(currentRegisterValue, 1U);
 
         reg.SetValue(decrementedRegister);
-
+        
         UpdateFlag(SharpFlags::CARRY, bCurrentCarry);
     }
 
@@ -336,6 +392,7 @@ namespace GBcc {
         
         reg.SetValue(incrementedRegister);
 
+        ResetFlag(SharpFlags::NOT_ADD);
         UpdateFlag(SharpFlags::CARRY, bCurrentCarry); 
     }
 
@@ -358,13 +415,11 @@ namespace GBcc {
 
             if (ptrOp == PointerOperation::Increment)
             {
-                address++;
-                addressSourceRegister->SetDoubleWord(address);
+                addressSourceRegister->SetDoubleWord(address + 1U);
             }
             else if (ptrOp == PointerOperation::Decrement)
             {
-                address--;
-                addressSourceRegister->SetDoubleWord(address);
+                addressSourceRegister->SetDoubleWord(address - 1U);
             }
         }
         else
@@ -388,13 +443,11 @@ namespace GBcc {
 
             if (ptrOp == PointerOperation::Increment)
             {
-                address++;
-                addressDestinationRegister->SetDoubleWord(address);
+                addressDestinationRegister->SetDoubleWord(address + 1U);
             }
             else if (ptrOp == PointerOperation::Decrement)
             {
-                address--;
-                addressDestinationRegister->SetDoubleWord(address);
+                addressDestinationRegister->SetDoubleWord(address - 1U);
             }
         }
         else
@@ -723,44 +776,8 @@ namespace GBcc {
         }
 
         const auto& registerOperand = GetRegisterFromIndex(registerOperandIndex);
-        const u8 currentAccumulatorValue = m_A.GetValue();
-        const u8 operandValue = registerOperand.GetValue();
-
-        u8 newAccumulatorValue = 0;
-
-        switch (aluOperation)
-        {
-            case GB_INSTR_ADD_OPCODE:
-            case GB_INSTR_ADC_OPCODE:
-                newAccumulatorValue = UnsignedAddWord(
-                    currentAccumulatorValue, 
-                    operandValue, 
-                    aluOperation & 0b1
-                );
-                m_A.SetValue(newAccumulatorValue);
-                break;
-            case GB_INSTR_SUB_OPCODE:
-            case GB_INSTR_SBC_OPCODE:
-                newAccumulatorValue = UnsignedSubtractWord(
-                    currentAccumulatorValue, 
-                    operandValue, 
-                    aluOperation & 0b1
-                );
-                m_A.SetValue(newAccumulatorValue);
-                break;
-            case GB_INSTR_AND_OPCODE:
-                AndAccumulator(operandValue);
-                break;
-            case GB_INSTR_XOR_OPCODE:
-                XorAccumulator(operandValue);
-                break;
-            case GB_INSTR_OR_OPCODE:
-                OrAccumulator(operandValue);
-                break;
-            case GB_INSTR_CP_OPCODE:
-                UnsignedSubtractWord(currentAccumulatorValue, operandValue, false);
-                break;
-        }
+        m_Operand.as8 = registerOperand.GetValue();
+        HandleAccumulatorALU(aluOperation);
     }
 
     void Sharp::DecodeBlock3(const u8 opcode)
@@ -793,7 +810,7 @@ namespace GBcc {
                 {
                     if (yIndex == 0)
                     {
-                        FetchWord();
+                        FetchDoubleWord();
                         Jump(true, false);
                     }
                     else if (yIndex == 6)
@@ -814,12 +831,51 @@ namespace GBcc {
                 }
                 break;
             case GB_INSTR_COND_CALL:
+                {
+                    if(yIndex <= GB_CPU_MAX_COND_CODE)
+                    {
+                        FetchDoubleWord();
+                        const bool bConditionMet = EvaluateCondition(yIndex);
+                        Call(bConditionMet);
+                    }
+                    else
+                    {
+                        std::cerr << "Invalid opcode! Got " 
+                            << std::showbase << std::hex << (u16) opcode << " @ PC = " 
+                            << std::showbase << std::hex << m_PC - 1U << ". Quitting." << std::endl;
+                        exit(-1);
+                    }
+                }
                 break;
             case GB_INSTR_PUSH_MISC:
+                {
+                    const u8 qIndex = GetValueFromMask(opcode, GB_Q_INDEX_MASK);
+                    const u8 pIndex = GetValueFromMask(opcode, GB_P_INDEX_MASK);
+                    if (qIndex == 0)
+                    {
+                        const auto& registersToPush = GetRegisterPairFromIndex(pIndex);
+                        PushRegisters(registersToPush);
+                    }
+                    else if (pIndex == 0)
+                    {
+                        FetchDoubleWord();
+                        Call();
+                    }
+                    else
+                    {
+                        std::cerr << "Invalid opcode! Got " 
+                            << std::showbase << std::hex << (u16) opcode << " @ PC = " 
+                            << std::showbase << std::hex << m_PC - 1U << ". Quitting." << std::endl;
+                        exit(-1);
+                    }
+                }
                 break;
             case GB_INSTR_ALU_IMM:
+                FetchWord();
+                HandleAccumulatorALU(yIndex);
                 break;
             case GB_INSTR_RESET:
+                ResetToVector((u16)yIndex * 8U);
                 break;
         }
     }
@@ -1034,21 +1090,25 @@ namespace GBcc {
                 m_A.SetValue(
                     RotateLeft(m_A.GetValue(), true)
                 );
+                ResetFlag(SharpFlags::ZERO);
                 break;
             case 1:
                 m_A.SetValue(
                     RotateRight(m_A.GetValue(), false)
                 );
+                ResetFlag(SharpFlags::ZERO);
                 break;
             case 2:
                 m_A.SetValue(
                     RotateLeft(m_A.GetValue(), true)
                 );
+                ResetFlag(SharpFlags::ZERO);
                 break;
             case 3:
                 m_A.SetValue(
                     RotateRight(m_A.GetValue(), false)
                 );
+                ResetFlag(SharpFlags::ZERO);
                 break;
             case 4:
                 DecimalAdjustAccumulator();
@@ -1101,6 +1161,10 @@ namespace GBcc {
         {
             auto& registersToRestore = GetRegisterPairFromIndex(pIndex);
             PopRegisters(registersToRestore);
+            if (pIndex == 3)
+            {
+                m_F.SetValue(m_F.GetValue() & 0xF0);
+            }
         }
         else 
         {
@@ -1155,6 +1219,46 @@ namespace GBcc {
         }
     }
 
+    void Sharp::HandleAccumulatorALU(const u8 aluCode)
+    {
+        const u8 currentAccumulatorValue = m_A.GetValue();
+        u8 newAccumulatorValue = 0;
+
+        switch (aluCode)
+        {
+            case GB_INSTR_ADD_OPCODE:
+            case GB_INSTR_ADC_OPCODE:
+                newAccumulatorValue = UnsignedAddWord(
+                    currentAccumulatorValue, 
+                    m_Operand.as8, 
+                    aluCode & 0b1
+                );
+                m_A.SetValue(newAccumulatorValue);
+                break;
+            case GB_INSTR_SUB_OPCODE:
+            case GB_INSTR_SBC_OPCODE:
+                newAccumulatorValue = UnsignedSubtractWord(
+                    currentAccumulatorValue, 
+                    m_Operand.as8, 
+                    aluCode & 0b1
+                );
+                m_A.SetValue(newAccumulatorValue);
+                break;
+            case GB_INSTR_AND_OPCODE:
+                AndAccumulator(m_Operand.as8);
+                break;
+            case GB_INSTR_XOR_OPCODE:
+                XorAccumulator(m_Operand.as8);
+                break;
+            case GB_INSTR_OR_OPCODE:
+                OrAccumulator(m_Operand.as8);
+                break;
+            case GB_INSTR_CP_OPCODE:
+                UnsignedSubtractWord(currentAccumulatorValue, m_Operand.as8);
+                break;
+        }
+    }
+
     void Sharp::RotateShiftHelper(ByteRegister& workingRegister, const u8 operation)
     {
         switch (operation)
@@ -1204,6 +1308,7 @@ namespace GBcc {
 
     u64 Sharp::Step()
     {
+        DumpRegs();
         const u8 opcode = m_pMemBus->ReadWord(m_PC++);
         ExecuteOpcode(opcode);
         return 0;

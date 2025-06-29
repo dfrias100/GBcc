@@ -110,14 +110,14 @@ namespace GBcc {
             m_StartFrame = m_Timer.now();
 
             m_System.Step();
-            DrawChecker(hScroll, vScroll);
-            m_Video.UpdateTexture(framebuffer);
-            m_Video.Draw();
+            //DrawChecker(hScroll, vScroll);
+            //m_Video.UpdateTexture(framebuffer);
+            //m_Video.Draw();
 
-            hScroll = (hScroll + 1) % VideoConstants::GAMEBOY_SCREEN_WIDTH;
-            vScroll = (vScroll + 1) % VideoConstants::GAMEBOY_SCREEN_HEIGHT;
+            //hScroll = (hScroll + 1) % VideoConstants::GAMEBOY_SCREEN_WIDTH;
+            //vScroll = (vScroll + 1) % VideoConstants::GAMEBOY_SCREEN_HEIGHT;
             
-            LimitFramerate(VideoConstants::GAMEBOY_REFRESH_RATE);
+            //LimitFramerate(VideoConstants::GAMEBOY_REFRESH_RATE);
         }
     }
 }

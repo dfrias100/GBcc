@@ -20,7 +20,8 @@
 #include "Types.hpp"
 #include "Core/Sharp/SharpRegister.hpp"
 
-#include <optional>
+#include <fstream>
+#include <iomanip>
 
 namespace GBcc
 {
@@ -76,6 +77,8 @@ namespace GBcc
 
         u64 m_CyclesTaken = 0ULL;
 
+        std::ofstream m_ExecLog;
+
         void FetchWord();
         void FetchDoubleWord();
 
@@ -128,9 +131,9 @@ namespace GBcc
         void StoreSP_ToMemory();
         void LoadHL_ToSP();
 
-        void Call(const bool bConditionMet);
+        void Call(const bool bConditionMet = true);
         void Jump(const bool bConditionMet, const bool bAddressInHL);
-        void JumpRelative(const bool bConditionMet);
+        void JumpRelative(const bool bConditionMet = true);
         void Return(const bool bConditionMet = true);
 
         void AddSignedWordToSP();
@@ -163,11 +166,18 @@ namespace GBcc
         void HandleIOLoadAndStackALU(const u8 yIndex);
         void HandlePopMisc(const u8 yIndex);
         void HandleAbsoluteJump(const u8 yIndex);
+        void HandleAccumulatorALU(const u8 aluCode);
         void LoadImmediateWord(const u8 opcode);
         void RotateShiftHelper(ByteRegister& workingRegister, const u8 operation);
+
+        void DumpRegs();
         
         public:
         Sharp(Memory* const pMemBus);
+        ~Sharp()
+        {
+            m_ExecLog.close();
+        }
 
         u64 Step();
     };

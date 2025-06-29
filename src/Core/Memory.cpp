@@ -26,7 +26,7 @@ namespace GBcc
 {
     Memory::Memory()
     {
-        std::string testRomPath = "../roms/cpu_instrs/01-special.gb";
+        std::string testRomPath = "../roms/cpu_instrs/individual/01-special.gb";
         std::ifstream testRomFile(testRomPath, std::ios::binary);
 
         testRomFile.read(
@@ -41,6 +41,7 @@ namespace GBcc
             reinterpret_cast<char *>(m_BootRom.data()),
             m_BootRom.size()
         );
+        m_BootRomEnable = false;
     }
 
     u8 Memory::ReadWord(const u16 address)
@@ -86,6 +87,15 @@ namespace GBcc
             {
                 return m_SerialRegs[1];
             }
+            else if (address == 0xFF44)
+            {
+                return 0x90;
+            }
+        }
+        else if (address >= 0xFF80 && address <= 0xFFFE)
+        {
+            trueAddress = address - 0xFF80;
+            return m_HighRam[trueAddress];
         }
 
         return 0;
@@ -115,6 +125,10 @@ namespace GBcc
         else if (address <= 0xFDFF)
         {
             trueAddress = address - 0xE000U;
+            if (trueAddress > 8192)
+            {
+                trueAddress -= 8192;
+            }
             m_WorkRam[trueAddress] = data;
         }
         else if (address >= 0xFF00 && address <= 0xFF7F)
@@ -132,6 +146,11 @@ namespace GBcc
                 char c = m_SerialRegs[0];
                 std::cout << c;
             }
+        }
+        else if (address >= 0xFF80 && address <= 0xFFFE)
+        {
+            trueAddress = address - 0xFF80;
+            m_HighRam[trueAddress] = data;
         }
     }
 
