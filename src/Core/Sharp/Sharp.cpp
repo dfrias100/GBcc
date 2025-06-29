@@ -341,8 +341,6 @@ namespace GBcc {
         {
             adjustment += FlagIsSet(SharpFlags::HALF)  ? 0x06U : 0U;
             adjustment += FlagIsSet(SharpFlags::CARRY) ? 0x60U : 0U;
-            const bool shouldSetCarry = adjustment > currentAccumulator;
-            UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
             currentAccumulator -= adjustment;
         }
         else
@@ -356,18 +354,22 @@ namespace GBcc {
 
             if (
                 FlagIsSet(SharpFlags::CARRY) 
-                || (currentAccumulator > 0x9F)
+                || (currentAccumulator > 0x99)
             ) {
                 adjustment += 0x60U;
+                SetFlag(SharpFlags::CARRY);
+            }
+            else
+            {
+                ResetFlag(SharpFlags::CARRY);
             }
 
-            const u16 result16 = currentAccumulator + adjustment;
-            const bool shouldSetCarry = TestBit(result16, 8U);
             currentAccumulator += adjustment;
         }
 
         const bool isZero = currentAccumulator == 0;
         UpdateFlag(SharpFlags::ZERO, isZero);
+        ResetFlag(SharpFlags::HALF);
         m_A.SetValue(currentAccumulator);
     }
 
