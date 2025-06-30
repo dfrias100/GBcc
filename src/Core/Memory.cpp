@@ -26,7 +26,7 @@ namespace GBcc
 {
     Memory::Memory()
     {
-        std::string testRomPath = "../roms/cpu_instrs/individual/01-special.gb";
+        std::string testRomPath = "../roms/cpu_instrs/individual/09-op r,r.gb";
         std::ifstream testRomFile(testRomPath, std::ios::binary);
 
         testRomFile.read(
@@ -42,6 +42,10 @@ namespace GBcc
             m_BootRom.size()
         );
         m_BootRomEnable = false;
+
+        std::fill(m_HighRam.begin(), m_HighRam.end(), 0x00U);
+        std::fill(m_WorkRam.begin(), m_WorkRam.end(), 0x00U);
+        std::fill(m_VideoRam.begin(), m_VideoRam.end(), 0x00U);
     }
 
     u8 Memory::ReadWord(const u16 address)
@@ -70,9 +74,13 @@ namespace GBcc
         else if (address >= 0xC000U && address <= 0xDFFFU)
         {
             trueAddress = address - 0xC000U;
+            if (trueAddress >= 8192)
+            {
+                trueAddress -= 8192;
+            }
             return m_WorkRam[trueAddress];
         }
-        else if (address <= 0xFDFF)
+        else if (address >= 0xE000 && address <= 0xFDFF)
         {
             trueAddress = address - 0xE000U;
             return m_WorkRam[trueAddress];
@@ -90,6 +98,11 @@ namespace GBcc
             else if (address == 0xFF44)
             {
                 return 0x90;
+            }
+            else
+            {
+                trueAddress = address - 0xFF00;
+                return m_IO_Ram[trueAddress];
             }
         }
         else if (address >= 0xFF80 && address <= 0xFFFE)
@@ -125,7 +138,7 @@ namespace GBcc
         else if (address <= 0xFDFF)
         {
             trueAddress = address - 0xE000U;
-            if (trueAddress > 8192)
+            if (trueAddress >= 8192)
             {
                 trueAddress -= 8192;
             }
@@ -145,6 +158,11 @@ namespace GBcc
             {
                 char c = m_SerialRegs[0];
                 std::cout << c;
+            }
+            else
+            {
+                trueAddress = address - 0xFF00;
+                m_IO_Ram[trueAddress] = data;
             }
         }
         else if (address >= 0xFF80 && address <= 0xFFFE)

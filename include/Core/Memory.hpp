@@ -31,6 +31,7 @@ namespace GBcc {
         std::array<u8, 127U> m_HighRam;
 
         std::array<u8, 8U * 1024U> m_VideoRam; // Temporary
+        std::array<u8, 128U> m_IO_Ram; // Temporary
 
         bool m_BootRomEnable = true;
 

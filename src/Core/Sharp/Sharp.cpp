@@ -235,20 +235,30 @@ namespace GBcc {
 
     u8 Sharp::UnsignedSubtractWord(const u8 lhs, const u8 rhs, const bool shouldBorrow)
     {
-        const u8 rhsModified = rhs - (
+        const u8 rhsModified = rhs + (
             shouldBorrow ?
             static_cast<u8>(FlagIsSet(SharpFlags::CARRY)) :
             0U
         );
+
         const u8 result = lhs - rhsModified;
 
         u8 lhsLowNibble = lhs & GB_LOW_NIBBLE;
-        u8 rhsLowNibble = rhsModified & GB_LOW_NIBBLE;
+        u8 rhsLowNibble = rhs & GB_LOW_NIBBLE;
 
         bool shouldSetHalfCarry = lhsLowNibble < rhsLowNibble;
-        UpdateFlag(SharpFlags::HALF, shouldSetHalfCarry);
+        bool shouldSetCarry = lhs < rhs;
 
-        bool shouldSetCarry = lhs < rhsModified;
+        const bool isCarrySet = FlagIsSet(SharpFlags::CARRY);
+
+        
+        if (shouldBorrow)
+        {
+            shouldSetHalfCarry = shouldSetHalfCarry || (isCarrySet && (lhsLowNibble == rhsLowNibble));
+            shouldSetCarry = shouldSetCarry || (isCarrySet && (lhs == rhs));
+        }
+
+        UpdateFlag(SharpFlags::HALF, shouldSetHalfCarry);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
 
         bool isZero = result == 0;
@@ -267,7 +277,9 @@ namespace GBcc {
         u8 newValue = value << 1U;
         newValue |= inBit;
 
-        UpdateFlag(SharpFlags::ZERO, false);
+        const bool isZero = newValue == 0; 
+
+        UpdateFlag(SharpFlags::ZERO, isZero);
         UpdateFlag(SharpFlags::NOT_ADD, false);
         UpdateFlag(SharpFlags::HALF, false);
         UpdateFlag(SharpFlags::CARRY, outBit);
@@ -574,6 +586,7 @@ namespace GBcc {
         const u8 spLowWord = m_SP & GB_LOW_BYTE;
         const u16 fullAdd = spLowWord + m_Operand.as8;
         const bool shouldSetCarry = TestBit(fullAdd, 8U);
+        UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
         
         UpdateFlag(SharpFlags::ZERO, false);
         UpdateFlag(SharpFlags::NOT_ADD, false);
@@ -648,6 +661,12 @@ namespace GBcc {
     {
         const u8 newHighNibble = (value & 0x0'FU) << 4U;
         const u8 newLowNibble  = (value & 0xF'0U) >> 4U;
+
+        const bool isZero = value == 0;
+        UpdateFlag(SharpFlags::ZERO, isZero);
+        UpdateFlag(SharpFlags::NOT_ADD, false);
+        UpdateFlag(SharpFlags::HALF, false);
+        UpdateFlag(SharpFlags::CARRY, false);
 
         return newHighNibble | newLowNibble;
     }
@@ -1080,6 +1099,11 @@ namespace GBcc {
 
         auto& destinationRegister = GetRegisterFromIndex(registerIndex);
         destinationRegister.SetValue(m_Operand.as8);
+
+        if (registerIndex == GB_CPU_DEREF_HL_PTR)
+        {
+            WriteHL();
+        }
     }
 
     void Sharp::HandleMiscAccumulator(const u8 opcode) 
@@ -1096,13 +1120,13 @@ namespace GBcc {
                 break;
             case 1:
                 m_A.SetValue(
-                    RotateRight(m_A.GetValue(), false)
+                    RotateRight(m_A.GetValue(), true)
                 );
                 ResetFlag(SharpFlags::ZERO);
                 break;
             case 2:
                 m_A.SetValue(
-                    RotateLeft(m_A.GetValue(), true)
+                    RotateLeft(m_A.GetValue(), false)
                 );
                 ResetFlag(SharpFlags::ZERO);
                 break;
@@ -1117,12 +1141,18 @@ namespace GBcc {
                 break;
             case 5:
                 m_A.SetValue(~m_A.GetValue());
+                SetFlag(SharpFlags::HALF);
+                SetFlag(SharpFlags::NOT_ADD);
                 break;
             case 6:
                 SetFlag(SharpFlags::CARRY);
+                ResetFlag(SharpFlags::NOT_ADD);
+                ResetFlag(SharpFlags::HALF);
                 break;
             case 7:
-                ResetFlag(SharpFlags::CARRY);
+                UpdateFlag(SharpFlags::CARRY, !FlagIsSet(SharpFlags::CARRY));
+                ResetFlag(SharpFlags::NOT_ADD);
+                ResetFlag(SharpFlags::HALF);
                 break;
         }
     }
@@ -1310,7 +1340,7 @@ namespace GBcc {
 
     u64 Sharp::Step()
     {
-        DumpRegs();
+        //DumpRegs();
         const u8 opcode = m_pMemBus->ReadWord(m_PC++);
         ExecuteOpcode(opcode);
         return 0;
