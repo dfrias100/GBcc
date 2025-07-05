@@ -21,19 +21,19 @@
 
 namespace GBcc
 {
-    const std::array<GLfloat, 20U> Video::m_OUTPUT_QUAD_VERTICES = {
+    const std::array<GLfloat, 20U> Video::s_OUTPUT_QUAD_VERTICES = {
          1.0f,  1.0f, 0.0f, 1.0f, 0.0f,
          1.0f, -1.0f, 0.0f, 1.0f, 1.0f,
         -1.0f, -1.0f, 0.0f, 0.0f, 1.0f,
         -1.0f,  1.0f, 0.0f, 0.0f, 0.0f
     };
     
-    const std::array<GLuint, 6U> Video::m_OUTPUT_QUAD_INDICES = {
+    const std::array<GLuint, 6U> Video::s_OUTPUT_QUAD_INDICES = {
         0, 1, 3,
         1, 2, 3
     };
     
-    const char* Video::m_OUTPUT_QUAD_VERT_SHADER = "#version 330\n"
+    const char* Video::s_OUTPUT_QUAD_VERT_SHADER = "#version 330\n"
         "layout (location = 0) in vec3 aPos;\n"
         "layout (location = 1) in vec2 aTexCoord;\n"
         "out vec2 texCoord;\n"
@@ -43,7 +43,7 @@ namespace GBcc
         "   texCoord = aTexCoord;\n"
         "}\0";
     
-    const char* Video::m_OUTPUT_QUAD_FRAG_SHADER = "#version 330\n"
+    const char* Video::s_OUTPUT_QUAD_FRAG_SHADER = "#version 330\n"
         "out vec4 fragColor;\n"
         "in vec2 texCoord;\n"
         "uniform sampler2D textureSampler;"
@@ -131,16 +131,16 @@ namespace GBcc
         glBindBuffer(GL_ARRAY_BUFFER, m_OutputQuadVBO);
         glBufferData(
             GL_ARRAY_BUFFER, 
-            sizeof(m_OUTPUT_QUAD_VERTICES), 
-            m_OUTPUT_QUAD_VERTICES.data(), 
+            sizeof(s_OUTPUT_QUAD_VERTICES), 
+            s_OUTPUT_QUAD_VERTICES.data(), 
             GL_STATIC_DRAW
         );
         
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_OutputQuadEBO);
         glBufferData(
             GL_ELEMENT_ARRAY_BUFFER, 
-            sizeof(m_OUTPUT_QUAD_INDICES), 
-            m_OUTPUT_QUAD_INDICES.data(), 
+            sizeof(s_OUTPUT_QUAD_INDICES), 
+            s_OUTPUT_QUAD_INDICES.data(), 
             GL_STATIC_DRAW
         );
 
@@ -187,7 +187,7 @@ namespace GBcc
         std::array<GLchar, 512U> infoLog;
 
         vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexShaderId, 1, &m_OUTPUT_QUAD_VERT_SHADER, 0);
+        glShaderSource(vertexShaderId, 1, &s_OUTPUT_QUAD_VERT_SHADER, 0);
         glCompileShader(vertexShaderId);
         glGetShaderiv(vertexShaderId, GL_COMPILE_STATUS, &success);
 
@@ -198,7 +198,7 @@ namespace GBcc
         }
 
         fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentShaderId, 1, &m_OUTPUT_QUAD_FRAG_SHADER, 0);
+        glShaderSource(fragmentShaderId, 1, &s_OUTPUT_QUAD_FRAG_SHADER, 0);
         glCompileShader(fragmentShaderId);
         glGetShaderiv(fragmentShaderId, GL_COMPILE_STATUS, &success);
 

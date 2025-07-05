@@ -19,9 +19,10 @@
 
 #include "Types.hpp"
 #include "Core/Sharp/SharpRegister.hpp"
+#include "Core/SystemConstants.hpp"
 
+#include <iostream>
 #include <fstream>
-#include <iomanip>
 
 namespace GBcc
 {
@@ -94,7 +95,6 @@ namespace GBcc
         inline void SetFlag(const SharpFlags& flag);
         inline void ResetFlag(const SharpFlags& flag);
         inline void UpdateFlag(const SharpFlags& flag, const bool set);
-        inline void ComplementCarry();
         inline bool FlagIsSet(const SharpFlags& flag);
         
         inline bool EvaluateCondition(const i8 conditionCode);
@@ -107,7 +107,12 @@ namespace GBcc
         void AndAccumulator(const u8 value);
         void OrAccumulator(const u8 value);
         void XorAccumulator(const u8 value);
+        void RotateLeftAccumulator(const bool bCircular);
+        void RotateRightAccumulator(const bool bCircular);
         void DecimalAdjustAccumulator();
+        void ComplementAccumulator();
+        void ComplementCarry();
+        void SetCarry();
         void DecrementRegisterWord(ByteRegister& reg);
         void IncrementRegisterWord(ByteRegister& reg);
         void AddRegisterWordToAccumulator(const ByteRegister& source);
@@ -181,4 +186,62 @@ namespace GBcc
 
         u64 Step();
     };
+
+    template <typename T>
+    bool Sharp::TestBit(const T val, const size_t bitIndex) const
+    {
+        if (bitIndex > ((sizeof(T) * 8U) - 1))
+        {
+            return false;
+        } 
+
+        return (val & (1U << bitIndex));
+    }
+
+    inline void Sharp::SetFlag(const SharpFlags& flag)
+    {
+        m_F.SetBit(static_cast<size_t>(flag));
+    }
+
+    inline void Sharp::ResetFlag(const SharpFlags& flag)
+    {
+        m_F.ResetBit(static_cast<size_t>(flag));
+    }
+
+    inline void Sharp::UpdateFlag(const SharpFlags& flag, const bool set)
+    {
+        if (set)
+        {
+            SetFlag(flag);
+        }
+        else
+        {
+            ResetFlag(flag);
+        }
+    }
+
+    inline bool Sharp::FlagIsSet(const SharpFlags& flag)
+    {
+        return m_F.BitIsSet(static_cast<size_t>(flag));
+    }
+
+    inline bool Sharp::EvaluateCondition(const i8 conditionCode)
+    {
+        if (conditionCode < 0) return true;
+
+        switch (conditionCode)
+        {
+            case GB_CPU_CONDITION_NZ:
+                return !FlagIsSet(SharpFlags::ZERO);
+            case GB_CPU_CONDITION_Z:
+                return FlagIsSet(SharpFlags::ZERO);
+            case GB_CPU_CONDITION_NC:
+                return !FlagIsSet(SharpFlags::CARRY);
+            case GB_CPU_CONDITION_C:
+                return FlagIsSet(SharpFlags::CARRY);
+            default:
+                std::cerr << "Invalid condition code, cannot evaluate instruction condtion! Got: " << (i16) conditionCode << std::endl;
+                exit(1);
+        }
+    }
 };

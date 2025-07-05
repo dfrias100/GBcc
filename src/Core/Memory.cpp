@@ -26,7 +26,7 @@ namespace GBcc
 {
     Memory::Memory()
     {
-        std::string testRomPath = "../roms/cpu_instrs/individual/09-op r,r.gb";
+        std::string testRomPath = "../roms/cpu_instrs/individual/11-op a,(hl).gb";
         std::ifstream testRomFile(testRomPath, std::ios::binary);
 
         testRomFile.read(
@@ -71,18 +71,9 @@ namespace GBcc
             trueAddress = address - 0x8000U;
             return m_VideoRam[trueAddress];
         }
-        else if (address >= 0xC000U && address <= 0xDFFFU)
+        else if (address >= 0xC000U && address <= 0xFDFFU)
         {
-            trueAddress = address - 0xC000U;
-            if (trueAddress >= 8192)
-            {
-                trueAddress -= 8192;
-            }
-            return m_WorkRam[trueAddress];
-        }
-        else if (address >= 0xE000 && address <= 0xFDFF)
-        {
-            trueAddress = address - 0xE000U;
+            trueAddress = address - 0xC000U - (address >= 0xE000 ? 0x2000U : 0U);
             return m_WorkRam[trueAddress];
         }
         else if (address >= 0xFF00 && address <= 0xFF7F)
@@ -130,18 +121,9 @@ namespace GBcc
             trueAddress = address - 0x8000U;
             m_VideoRam[trueAddress] = data;
         } 
-        else if (address >= 0xC000U && address <= 0xDFFFU)
+        else if (address >= 0xC000U && address <= 0xFDFFU)
         {
-            trueAddress = address - 0xC000U;
-            m_WorkRam[trueAddress] = data;
-        }
-        else if (address <= 0xFDFF)
-        {
-            trueAddress = address - 0xE000U;
-            if (trueAddress >= 8192)
-            {
-                trueAddress -= 8192;
-            }
+            trueAddress = address - 0xC000U - (address >= 0xE000 ? 0x2000U : 0U);
             m_WorkRam[trueAddress] = data;
         }
         else if (address >= 0xFF00 && address <= 0xFF7F)

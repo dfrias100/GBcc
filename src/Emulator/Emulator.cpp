@@ -36,7 +36,7 @@ namespace GBcc {
 
     void Emulator::Run()
     {    
-        std::array<u8, 160U * 144U * 3U> framebuffer;
+        std::array<u8, 160U * 144U * 3U> framebuffer = { 0U };
         std::array<std::array<u8, 3U>, 4U> colorLut ={
             {
                 {0x08, 0x18, 0x20},
@@ -109,10 +109,13 @@ namespace GBcc {
         {
             m_StartFrame = m_Timer.now();
 
-            m_System.Step();
+            for (size_t i = 0; i <= 4194304; i += 4)
+                m_System.Step();
+            
             //DrawChecker(hScroll, vScroll);
             //m_Video.UpdateTexture(framebuffer);
-            //m_Video.Draw();
+            
+            m_Video.Draw();
 
             //hScroll = (hScroll + 1) % VideoConstants::GAMEBOY_SCREEN_WIDTH;
             //vScroll = (vScroll + 1) % VideoConstants::GAMEBOY_SCREEN_HEIGHT;

@@ -16,7 +16,7 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <cstdint>
+#include <cstddef>
 #include <bit>
 
 namespace GBcc
