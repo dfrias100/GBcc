@@ -22,7 +22,7 @@
 
 namespace GBcc 
 {
-    ByteRegister::ByteRegister() : m_Value(0) {}
+    ByteRegister::ByteRegister() : m_Value(0U) {}
     ByteRegister::ByteRegister(const u8 initializerValue) : m_Value(initializerValue) {}
     
     ByteRegister::ByteRegister(const ByteRegister& reg)
@@ -48,7 +48,7 @@ namespace GBcc
 
     void ByteRegister::SetBit(size_t bitIndex)
     {
-        if (bitIndex > 7) 
+        if (bitIndex > 7U) 
         {
             return;
         }
@@ -58,7 +58,7 @@ namespace GBcc
 
     void ByteRegister::ResetBit(size_t bitIndex)
     {
-        if (bitIndex > 7) 
+        if (bitIndex > 7U) 
         {
             return;
         }
@@ -84,7 +84,7 @@ namespace GBcc
 
     void SharpRegister::SetDoubleWord(const u16 doubleWord)
     {
-        m_HighRegister.SetValue((doubleWord & GB_HIGH_BYTE) >> 8U);
-        m_LowRegister.SetValue(doubleWord & GB_LOW_BYTE);
+        m_HighRegister.SetValue((doubleWord & U16_HIGH_BYTE) >> 8U);
+        m_LowRegister.SetValue(doubleWord & U16_LOW_BYTE);
     }
 }

@@ -23,8 +23,8 @@ namespace GBcc
     u8 Sharp::UnsignedAddWord(const u8 lhs, const u8 rhs, const bool shouldAddCarry)
     {
         u8 carry = shouldAddCarry ? static_cast<u8>(FlagIsSet(SharpFlags::CARRY)) : 0U;
-        u8 lhsLowNibble = lhs & GB_LOW_NIBBLE;
-        u8 rhsLowNibble = rhs & GB_LOW_NIBBLE;
+        u8 lhsLowNibble = lhs & U8_LOW_NIBBLE;
+        u8 rhsLowNibble = rhs & U8_LOW_NIBBLE;
 
         u8 halfAdd = lhsLowNibble + rhsLowNibble + carry;
         bool shouldSetHalfCarry = TestBit(halfAdd, 4U);
@@ -34,11 +34,11 @@ namespace GBcc
         bool shouldSetCarry = TestBit(result16, 8U);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
 
-        u8 result = result16 & GB_LOW_BYTE;
+        u8 result = result16 & U16_LOW_BYTE;
         bool isZero = result == 0;
         UpdateFlag(SharpFlags::ZERO, isZero);
 
-        UpdateFlag(SharpFlags::NOT_ADD, false);
+        ResetFlag(SharpFlags::NOT_ADD);
 
         return result;
     }
@@ -53,8 +53,8 @@ namespace GBcc
 
         const u8 result = lhs - rhsModified;
 
-        u8 lhsLowNibble = lhs & GB_LOW_NIBBLE;
-        u8 rhsLowNibble = rhs & GB_LOW_NIBBLE;
+        u8 lhsLowNibble = lhs & U8_LOW_NIBBLE;
+        u8 rhsLowNibble = rhs & U8_LOW_NIBBLE;
 
         bool shouldSetHalfCarry = lhsLowNibble < rhsLowNibble;
         bool shouldSetCarry = lhs < rhs;
@@ -74,7 +74,7 @@ namespace GBcc
         bool isZero = result == 0;
         UpdateFlag(SharpFlags::ZERO, isZero);
 
-        UpdateFlag(SharpFlags::NOT_ADD, true);
+        SetFlag(SharpFlags::NOT_ADD);
 
         return result;
     }
@@ -119,7 +119,7 @@ namespace GBcc
 
         u16 result = result32 & U32_LOW_HALF;
 
-        UpdateFlag(SharpFlags::NOT_ADD, false);
+        ResetFlag(SharpFlags::NOT_ADD);
 
         return result;
     }
@@ -140,20 +140,20 @@ namespace GBcc
     {
         const i8 offset = m_Operand.as8;
 
-        const u8 spLowNibble = m_SP & GB_LOW_NIBBLE;
-        const u8 offsetLowNibble = offset & GB_LOW_NIBBLE;
+        const u8 spLowNibble = m_SP & U8_LOW_NIBBLE;
+        const u8 offsetLowNibble = offset & U8_LOW_NIBBLE;
 
         const u8 halfAdd = spLowNibble + offsetLowNibble;
         const bool shouldSetHalfCarry = TestBit(halfAdd, 4U);
         UpdateFlag(SharpFlags::HALF, shouldSetHalfCarry);
 
-        const u8 spLowWord = m_SP & GB_LOW_BYTE;
+        const u8 spLowWord = m_SP & U16_LOW_BYTE;
         const u16 fullAdd = spLowWord + m_Operand.as8;
         const bool shouldSetCarry = TestBit(fullAdd, 8U);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
         
-        UpdateFlag(SharpFlags::ZERO, false);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
+        ResetFlag(SharpFlags::ZERO);    
+        ResetFlag(SharpFlags::NOT_ADD);        
 
         m_SP += offset;
     }

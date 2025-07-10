@@ -25,10 +25,11 @@ namespace GBcc
         currentAccumulator &= value;
 
         bool isZero = currentAccumulator == 0U; 
+
         UpdateFlag(SharpFlags::ZERO, isZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, true);
-        UpdateFlag(SharpFlags::CARRY, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        SetFlag(SharpFlags::HALF);
+        ResetFlag(SharpFlags::CARRY);
 
         m_A.SetValue(currentAccumulator);
     }
@@ -38,10 +39,11 @@ namespace GBcc
         const u8 currentAccumulator = m_A.GetValue() ^ value;
         
         const bool isZero = currentAccumulator == 0U; 
+
         UpdateFlag(SharpFlags::ZERO, isZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
-        UpdateFlag(SharpFlags::CARRY, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
+        ResetFlag(SharpFlags::CARRY);
 
         m_A.SetValue(currentAccumulator);
     }
@@ -51,11 +53,12 @@ namespace GBcc
         const u8 currentAccumulator = m_A.GetValue() | value;
 
         const bool isZero = currentAccumulator == 0U; 
-        UpdateFlag(SharpFlags::ZERO, isZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
-        UpdateFlag(SharpFlags::CARRY, false);
 
+        UpdateFlag(SharpFlags::ZERO, isZero);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
+        ResetFlag(SharpFlags::CARRY);
+        
         m_A.SetValue(currentAccumulator);
     }
 

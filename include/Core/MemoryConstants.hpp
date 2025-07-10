@@ -15,16 +15,12 @@
 * You should have received a copy of the GNU General Public License
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#pragma once
 #include "Types.hpp"
 
 namespace GBcc
 {
-    constexpr u16 U16_HIGH_BYTE = 0xFF'00U;
-    constexpr u16 U16_LOW_BYTE  = 0x00'FFU;
-
-    constexpr u8 U8_HIGH_NIBBLE = 0xF'0U;
-    constexpr u8 U8_LOW_NIBBLE  = 0x0'FU;
-
-    constexpr u32 U32_HIGH_HALF = 0xFFFF'0000U;
-    constexpr u32  U32_LOW_HALF = 0x0000'FFFFU;
+    constexpr size_t GB_BOOTROM_SIZE        = 256ULL;
+    constexpr size_t GB_BOOTROM_END         = GB_BOOTROM_SIZE - 1U;
+    constexpr u16    GB_CART_SPACE_END      = 0x7FFFULL;
 }

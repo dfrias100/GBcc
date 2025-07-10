@@ -19,7 +19,7 @@
 
 #include "Types.hpp"
 #include "Core/Sharp/SharpRegister.hpp"
-#include "Core/SystemConstants.hpp"
+#include "Core/Sharp/SharpConstants.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -92,10 +92,10 @@ namespace GBcc
         template <typename T>
         bool TestBit(const T val, size_t bitIndex) const;
 
-        inline void SetFlag(const SharpFlags& flag);
-        inline void ResetFlag(const SharpFlags& flag);
-        inline void UpdateFlag(const SharpFlags& flag, const bool set);
-        inline bool FlagIsSet(const SharpFlags& flag);
+        inline void SetFlag(const SharpFlags flag);
+        inline void ResetFlag(const SharpFlags flag);
+        inline void UpdateFlag(const SharpFlags flag, const bool set);
+        inline bool FlagIsSet(const SharpFlags flag);
         
         inline bool EvaluateCondition(const i8 conditionCode);
 
@@ -198,17 +198,17 @@ namespace GBcc
         return (val & (1U << bitIndex));
     }
 
-    inline void Sharp::SetFlag(const SharpFlags& flag)
+    inline void Sharp::SetFlag(const SharpFlags flag)
     {
         m_F.SetBit(static_cast<size_t>(flag));
     }
 
-    inline void Sharp::ResetFlag(const SharpFlags& flag)
+    inline void Sharp::ResetFlag(const SharpFlags flag)
     {
         m_F.ResetBit(static_cast<size_t>(flag));
     }
 
-    inline void Sharp::UpdateFlag(const SharpFlags& flag, const bool set)
+    inline void Sharp::UpdateFlag(const SharpFlags flag, const bool set)
     {
         if (set)
         {
@@ -220,7 +220,7 @@ namespace GBcc
         }
     }
 
-    inline bool Sharp::FlagIsSet(const SharpFlags& flag)
+    inline bool Sharp::FlagIsSet(const SharpFlags flag)
     {
         return m_F.BitIsSet(static_cast<size_t>(flag));
     }

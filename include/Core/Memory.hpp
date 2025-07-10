@@ -18,7 +18,7 @@
 #include <array>
 
 #include "Types.hpp"
-#include "SystemConstants.hpp"
+#include "MemoryConstants.hpp"
 
 namespace GBcc {
     class Memory

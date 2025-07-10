@@ -27,8 +27,8 @@ namespace GBcc
         const bool shouldSetZero = newValue == 0U;
 
         UpdateFlag(SharpFlags::ZERO, shouldSetZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
 
         return newValue;
@@ -43,8 +43,8 @@ namespace GBcc
         const bool shouldSetZero = newValue == 0U;
 
         UpdateFlag(SharpFlags::ZERO, shouldSetZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
 
         return newValue;
@@ -58,8 +58,8 @@ namespace GBcc
         const bool shouldSetZero = newValue == 0U;
 
         UpdateFlag(SharpFlags::ZERO, shouldSetZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
         UpdateFlag(SharpFlags::CARRY, shouldSetCarry);
 
         return newValue;
@@ -72,9 +72,9 @@ namespace GBcc
 
         const bool isZero = value == 0;
         UpdateFlag(SharpFlags::ZERO, isZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
-        UpdateFlag(SharpFlags::CARRY, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
+        ResetFlag(SharpFlags::CARRY);
 
         return newHighNibble | newLowNibble;
     }
@@ -83,8 +83,8 @@ namespace GBcc
     {
         bool shouldSetZero = !TestBit(value, index);
         UpdateFlag(SharpFlags::ZERO, shouldSetZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, true);
+        ResetFlag(SharpFlags::NOT_ADD);
+        SetFlag(SharpFlags::HALF);
     }
 
         u8 Sharp::ResetBit(const u8 index, const u8 value)
@@ -114,8 +114,8 @@ namespace GBcc
         const bool isZero = newValue == 0; 
 
         UpdateFlag(SharpFlags::ZERO, isZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
         UpdateFlag(SharpFlags::CARRY, outBit);
 
         return newValue;
@@ -132,8 +132,8 @@ namespace GBcc
         const bool isZero = newValue == 0; 
 
         UpdateFlag(SharpFlags::ZERO, isZero);
-        UpdateFlag(SharpFlags::NOT_ADD, false);
-        UpdateFlag(SharpFlags::HALF, false);
+        ResetFlag(SharpFlags::NOT_ADD);
+        ResetFlag(SharpFlags::HALF);
         UpdateFlag(SharpFlags::CARRY, outBit);
 
         return newValue;

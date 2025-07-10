@@ -194,28 +194,28 @@ namespace GBcc
 
         switch (accumulatorOp)
         {
-            case 0:
-                RotateLeftAccumulator(true);
+            case GB_INSTR_ALU_OP_RLCA:
+                RotateLeftAccumulator(GB_CIRCULAR_ROTATE);
                 break;
-            case 1:
-                RotateRightAccumulator(true);
+            case GB_INSTR_ALU_OP_RRCA:
+                RotateRightAccumulator(GB_CIRCULAR_ROTATE);
                 break;
-            case 2:
-                RotateLeftAccumulator(false);
+            case GB_INSTR_ALU_OP_RLA:
+                RotateLeftAccumulator(GB_NON_CIRCULAR_ROTATE);
                 break;
-            case 3:
-                RotateRightAccumulator(false);
+            case GB_INSTR_ALU_OP_RRA:
+                RotateRightAccumulator(GB_NON_CIRCULAR_ROTATE);
                 break;
-            case 4:
+            case GB_INSTR_ALU_OP_DAA:
                 DecimalAdjustAccumulator();
                 break;
-            case 5:
+            case GB_INSTR_ALU_OP_CPLA:
                 ComplementAccumulator();
                 break;
-            case 6:
+            case GB_INSTR_ALU_OP_SCF:
                 SetCarry();
                 break;
-            case 7:
+            case GB_INSTR_ALU_OP_CCF:
                 ComplementCarry();
                 break;
         }
@@ -227,22 +227,22 @@ namespace GBcc
 
         switch (yIndex)
         {
-            case 4:
+            case GB_INSTR_STR_A_MMIO:
             {
-                m_Operand.as16 = 0xFF00U | m_Operand.as8;
+                m_Operand.as16 = GB_MMIO_BASE_ADDRESS | m_Operand.as8;
                 StoreWordToMemory(nullptr, m_A);
             }
                 break;
-            case 5:
+            case GB_INSTR_ADD_SP_SIGNED:
                 AddSignedWordToSP();
                 break;
-            case 6:
+            case GB_INSTR_LD_A_MMIO:
             {
-                m_Operand.as16 = 0xFF00U | m_Operand.as8;
+                m_Operand.as16 = GB_MMIO_BASE_ADDRESS | m_Operand.as8;
                 LoadWordFromAddress(nullptr, m_A);
             }
                 break;
-            case 7:
+            case GB_INSTR_LOAD_HL_OFFSET_SP:
                 LoadToHL_SP_WithOffset();
                 break;
         }
@@ -294,7 +294,7 @@ namespace GBcc
             if ((~yIndex) & 1U)
             {
                 m_Operand.as8 = m_C.GetValue();
-                m_Operand.as16 = 0xFF00U | (u16)m_Operand.as8;
+                m_Operand.as16 = GB_MMIO_BASE_ADDRESS | (u16)m_Operand.as8;
             }
             else
             {
@@ -303,12 +303,12 @@ namespace GBcc
 
             switch (yIndex)
             {
-                case 4:
-                case 5:
+                case GB_INSTR_STR_A_MMIO:
+                case GB_INSTR_STR_A_IMM_PTR:
                     StoreWordToMemory(nullptr, m_A);
                     break;
-                case 6:
-                case 7:
+                case GB_INSTR_LD_A_MMIO:
+                case GB_INSTR_LD_A_IMM_PTR:
                     LoadWordFromAddress(nullptr, m_A);
                     break;
             }
@@ -359,42 +359,42 @@ namespace GBcc
     {
         switch (operation)
         {
-            case 0:
+            case GB_INSTR_CB_OP_RLC:
                 workingRegister.SetValue(
                     RotateLeft(workingRegister.GetValue(), true)
                 );
                 break;
-            case 1:
+            case GB_INSTR_CB_OP_RRC:
                 workingRegister.SetValue(
                     RotateRight(workingRegister.GetValue(), true)
                 );
                 break;
-            case 2:
+            case GB_INSTR_CB_OP_RL:
                 workingRegister.SetValue(
                     RotateLeft(workingRegister.GetValue(), false)
                 );
                 break;
-            case 3:
+            case GB_INSTR_CB_OP_RR:
                 workingRegister.SetValue(
                     RotateRight(workingRegister.GetValue(), false)
                 );
                 break;
-            case 4:
+            case GB_INSTR_CB_OP_SLA:
                 workingRegister.SetValue(
                     ShiftLeftArithmetic(workingRegister.GetValue())
                 );
                 break;
-            case 5:
+            case GB_INSTR_CB_OP_SRA:
                 workingRegister.SetValue(
                     ShiftRightArithmetic(workingRegister.GetValue())
                 );
                 break;
-            case 6:
+            case GB_INSTR_CB_OP_SWAP:
                 workingRegister.SetValue(
                     SwapNibbles(workingRegister.GetValue())
                 );
                 break;
-            case 7:
+            case GB_INSTR_CB_OP_SRL:
                 workingRegister.SetValue(
                     ShiftRightLogical(workingRegister.GetValue())
                 );
