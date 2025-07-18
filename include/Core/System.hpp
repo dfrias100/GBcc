@@ -26,10 +26,13 @@ namespace GBcc
     {
         Sharp m_CPU;
         Memory m_Memory; 
+
+        u64 m_T_CyclesPassed = 0;
         public:
         System();
         ~System() = default;
 
         void Step();
+        void Catchup(u64 lateCycles);
     };
 };

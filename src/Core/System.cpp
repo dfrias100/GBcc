@@ -18,12 +18,20 @@
 
 #include "Core/System.hpp"
 
+#include <iostream>
+
 namespace GBcc
 {
-    System::System() : m_CPU(&m_Memory) {};
+    System::System() : m_CPU(&m_Memory, std::bind(&System::Catchup, this, std::placeholders::_1)) {};
 
     void System::Step()
     {
         m_CPU.Step();
-    }    
+    }
+
+    void System::Catchup(u64 lateCycles)
+    {
+        m_T_CyclesPassed += lateCycles;
+        std::cout << m_T_CyclesPassed << std::endl;
+    }
 }

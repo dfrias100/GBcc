@@ -24,27 +24,22 @@
 #include <iostream>
 #include <fstream>
 
+#include <functional>
+
 namespace GBcc
 {
-    enum PointerOperation
-    {
-        Increment = 1,
-        Decrement = 2,
-        Nothing   = 3
-    };
-
-    enum class SharpFlags
-    {
-        ZERO    = 7,
-        NOT_ADD = 6,
-        HALF    = 5,
-        CARRY   = 4
-    };
-    
     class Memory;
 
     class Sharp
     {
+        enum class SharpFlags
+        {
+            ZERO    = 7,
+            NOT_ADD = 6,
+            HALF    = 5,
+            CARRY   = 4
+        };
+        
         private:
         ByteRegister m_A;
         ByteRegister m_F;
@@ -75,19 +70,9 @@ namespace GBcc
         } m_Operand;
 
         Memory* const m_pMemBus;
-
-        u64 m_CyclesTaken = 0ULL;
+        std::function<void(u64)> Synchronize;
 
         std::ofstream m_ExecLog;
-
-        void FetchWord();
-        void FetchDoubleWord();
-
-        void FetchHL();
-        void WriteHL();
-
-        ByteRegister& GetRegisterFromIndex(const u8 index);
-        SharpRegister& GetRegisterPairFromIndex(const u8 index);
 
         template <typename T>
         bool TestBit(const T val, size_t bitIndex) const;
@@ -97,94 +82,18 @@ namespace GBcc
         inline void UpdateFlag(const SharpFlags flag, const bool set);
         inline bool FlagIsSet(const SharpFlags flag);
         
-        inline bool EvaluateCondition(const i8 conditionCode);
-
-        void RegisterToRegisterWord(const ByteRegister& source, ByteRegister& destination);
-        u8   UnsignedAddWord(const u8 lhs, const u8 rhs, const bool shouldAddCarry = false);
-        u8   UnsignedSubtractWord(const u8 lhs, const u8 rhs, const bool shouldBorrow = false);
-        u8   RotateLeft(const u8 value, const bool bCircular);
-        u8   RotateRight(const u8 value, const bool bCircular);
-        void AndAccumulator(const u8 value);
-        void OrAccumulator(const u8 value);
-        void XorAccumulator(const u8 value);
-        void RotateLeftAccumulator(const bool bCircular);
-        void RotateRightAccumulator(const bool bCircular);
-        void DecimalAdjustAccumulator();
-        void ComplementAccumulator();
-        void ComplementCarry();
-        void SetCarry();
-        void DecrementRegisterWord(ByteRegister& reg);
-        void IncrementRegisterWord(ByteRegister& reg);
-        void AddRegisterWordToAccumulator(const ByteRegister& source);
-        void LoadWordFromAddress(
-            SharpRegister* const addressSourceRegister,
-            ByteRegister& destination, 
-            const PointerOperation ptrOp = PointerOperation::Nothing
-        );
-        void StoreWordToMemory(
-            SharpRegister* const addressDestinationRegister,
-            const ByteRegister& source, 
-            const PointerOperation ptrOp = PointerOperation::Nothing
-        );
-
-        void LoadDoubleWordToRegister(SharpRegister& destination);
-        void IncrementRegisterDoubleWord(SharpRegister& reg);
-        void DecrementRegisterDoubleWord(SharpRegister& reg);
-        u16  UnsignedAddDoubleWord(const u16 lhs, const u16 rhs);
-        void PushRegisters(const SharpRegister& reg);
-        void PopRegisters(SharpRegister& reg);
-        void StoreSP_ToMemory();
-        void LoadHL_ToSP();
-
-        void Call(const bool bConditionMet = true);
-        void Jump(const bool bConditionMet, const bool bAddressInHL);
-        void JumpRelative(const bool bConditionMet = true);
-        void Return(const bool bConditionMet = true);
-
-        void AddSignedWordToSP();
-        void LoadToHL_SP_WithOffset();
-
-        void ResetToVector(const u16 resetVector);
-
-        u8 ShiftLeftArithmetic(const u8 value);
-        u8 ShiftRightArithmetic(const u8 value);
-        u8 ShiftRightLogical(const u8 value);
-
-        u8 SwapNibbles(const u8 value);
-        void BitInstruction(const u8 index, const u8 value);
-        u8 ResetBit(const u8 index, const u8 value);
-        u8 SetBit(const u8 index, const u8 value);
-
-        void ExecuteOpcode(const u8 opcode);
-
-        void DecodeBlock0(const u8 opcode);
-        void DecodeBlock1(const u8 opcode);
-        void DecodeBlock2(const u8 opcode);
-        void DecodeBlock3(const u8 opcode);
-        void DecodePrefixCB(const u8 opcode);
-
-        void HandleRelJumpMisc(const u8 opcode);
-        void HandleIncrementDecrement(const u8 opcode, const u8 zIndex);
-        void HandleLoadStoreIndirect(const u8 opcode);
-        void HandleLoadDouble(const u8 opcode);
-        void HandleMiscAccumulator(const u8 opcode);
-        void HandleIOLoadAndStackALU(const u8 yIndex);
-        void HandlePopMisc(const u8 yIndex);
-        void HandleAbsoluteJump(const u8 yIndex);
-        void HandleAccumulatorALU(const u8 aluCode);
-        void LoadImmediateWord(const u8 opcode);
-        void RotateShiftHelper(ByteRegister& workingRegister, const u8 operation);
-
         void DumpRegs();
+
+        u8 FetchInstruction();
         
         public:
-        Sharp(Memory* const pMemBus);
+        Sharp(Memory* const pMemBus, std::function<void(u64)> syncCallback);
         ~Sharp()
         {
             m_ExecLog.close();
         }
 
-        u64 Step();
+        void Step();
     };
 
     template <typename T>
@@ -223,25 +132,5 @@ namespace GBcc
     inline bool Sharp::FlagIsSet(const SharpFlags flag)
     {
         return m_F.BitIsSet(static_cast<size_t>(flag));
-    }
-
-    inline bool Sharp::EvaluateCondition(const i8 conditionCode)
-    {
-        if (conditionCode < 0) return true;
-
-        switch (conditionCode)
-        {
-            case GB_CPU_CONDITION_NZ:
-                return !FlagIsSet(SharpFlags::ZERO);
-            case GB_CPU_CONDITION_Z:
-                return FlagIsSet(SharpFlags::ZERO);
-            case GB_CPU_CONDITION_NC:
-                return !FlagIsSet(SharpFlags::CARRY);
-            case GB_CPU_CONDITION_C:
-                return FlagIsSet(SharpFlags::CARRY);
-            default:
-                std::cerr << "Invalid condition code, cannot evaluate instruction condtion! Got: " << (i16) conditionCode << std::endl;
-                exit(1);
-        }
     }
 };
