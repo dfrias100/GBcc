@@ -76,13 +76,6 @@ namespace GBcc
         }
     }
 
-    u8 Sharp::FetchInstruction()
-    {
-        const u8 fetchedData = m_pMemBus->ReadWord(m_PC++);
-        Synchronize(1U);
-        return fetchedData;
-    }
-
     void Sharp::Step()
     {
         //DumpRegs();

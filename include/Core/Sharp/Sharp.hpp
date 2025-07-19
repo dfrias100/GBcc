@@ -39,6 +39,69 @@ namespace GBcc
             HALF    = 5,
             CARRY   = 4
         };
+
+        enum class AddressingMode
+        {
+            Implied,
+
+            Imm8,
+            Imm16,
+            
+            Reg8,
+            Reg8_Reg8,
+            Reg8_Imm8,
+            Reg8_Addr16,
+            Addr16_Reg8,
+            AddrReg16_Reg8,
+            Reg8_AddrReg16,
+            HAddr8_Reg8,
+            Reg8_HAddr8,
+            AddrReg16,
+            
+            Reg16,
+            Reg16_Reg16,
+            Reg16_Imm16,
+            Addr16_Reg16,
+            
+            HLI_Reg8,
+            HLD_Reg8,
+            Reg8_HLI,
+            Reg8_HLD
+        };
+
+        enum class Register
+        {
+            RegA,
+            RegF,
+            RegB,
+            RegC,
+            RegD,
+            RegE,
+            RegH,
+            RegL,
+            RegAF,
+            RegBC,
+            RegDE,
+            RegHL
+        };
+
+        enum class ConditionCode
+        {
+            None,
+            NotZero,
+            NoCarry,
+            Carry,
+            Zero
+        }
+
+        struct SharpInstruction
+        {
+            AddressingMode addrMode;
+            Register primaryRegister;
+            Register secondaryRegister;
+            ConditionCode condition;
+            u8 staticParameter;
+        };
         
         private:
         ByteRegister m_A;
@@ -53,8 +116,6 @@ namespace GBcc
         ByteRegister m_H;
         ByteRegister m_L;
 
-        ByteRegister m_HL_Memory;
-
         SharpRegister m_AF;
         SharpRegister m_BC;
         SharpRegister m_DE;
@@ -68,6 +129,8 @@ namespace GBcc
             u16 as16;
             u8  as8;
         } m_Operand;
+
+        SharpInstruction m_CurrentInstruction;
 
         Memory* const m_pMemBus;
         std::function<void(u64)> Synchronize;

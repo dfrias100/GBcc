@@ -26,7 +26,7 @@ namespace GBcc
 {
     Memory::Memory()
     {
-        std::string testRomPath = "../roms/cpu_instrs/individual/10-bit ops.gb";
+        std::string testRomPath = "../roms/cpu_instrs/individual/01-special.gb";
         std::ifstream testRomFile(testRomPath, std::ios::binary);
 
         testRomFile.read(
